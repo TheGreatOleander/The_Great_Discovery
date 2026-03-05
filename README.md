@@ -105,6 +105,84 @@ This engine is built to do the same thing, systematically, across arbitrary know
 
 ---
 
+## Intellectual Lineage
+
+This architecture did not appear from nowhere. When people who study systems look at it, they recognize something. That recognition has a history.
+
+### Leibniz and the Dream That Waited 300 Years
+
+In the late 1600s, Gottfried Wilhelm Leibniz proposed two things that were, for his era, essentially science fiction.
+
+The first was the ***Characteristica Universalis*** — a universal symbolic language capable of representing all knowledge. Not prose, not mathematics alone, but a structured encoding where every concept, law, and relation had a precise, manipulable form.
+
+The second was the ***Calculus Ratiocinator*** — a mechanical method for reasoning over that language. If two scholars disagreed, they would not argue. They would say:
+
+> *"Let us calculate."*
+
+And the system would resolve the dispute through logical operations on the symbolic structure.
+
+Leibniz believed knowledge could be mechanically explored — that the space of valid ideas had a shape, and that shape could be navigated by a sufficiently precise instrument.
+
+He never finished it. Three barriers stopped him: knowledge wasn't machine-readable, compute didn't exist, and the relational explosion of a truly universal symbolic system was unmanageable by hand.
+
+Those three barriers are now essentially gone.
+
+The Great Discovery is not trying to be the *Characteristica Universalis*. But it is operating on the same foundational intuition: that knowledge has a **structural shape**, that shape has **constraints**, and those constraints, accumulated carefully enough, point at things that must exist.
+
+The parallel runs surprisingly deep:
+
+| Leibniz | The Great Discovery |
+|---------|-------------------|
+| *Characteristica Universalis* — universal symbolic encoding | Graph model — typed nodes, typed edges, concept vocabulary |
+| *Calculus Ratiocinator* — mechanical reasoning over symbols | Constraint engine — pressure measurement, forbidden motif accumulation |
+| Logical incompleteness detection | Hole detector — load-bearing absences |
+| Hypothesis generation by symbolic derivation | Question generation from structural profiles |
+| Rational verification of consistency | Convergence scoring, stability classification |
+
+Where Leibniz imagined scholars settling arguments by calculation, this engine does something structurally similar: it models competing configurations, measures their stability, and surfaces what the structure itself demands.
+
+### Santa Fe and Emergent Complexity
+
+The Santa Fe Institute's complexity research program — launched in the 1980s — pursued a related but distinct idea: model civilization as interacting systems and study what emerges from the interactions. Their work produced deep insights into emergent behavior, phase transitions, and self-organization.
+
+The difference is that Santa Fe-style complexity research primarily *analyzes* systems. It observes what emerges and characterizes it.
+
+This engine attempts something further: it *evolves* a knowledge structure under constraint pressure and watches what the structure demands. The goal is not to describe emergence but to use emergence as a discovery instrument.
+
+### Herbert Simon and Automated Discovery
+
+The question of whether machines could discover — not just compute — occupied some of the sharpest minds of the 20th century. Herbert A. Simon and Allen Newell built early programs that rediscovered laws of physics and mathematics from data. Later work produced systems that found novel scientific hypotheses in chemistry and molecular biology.
+
+Those systems were narrow by design. They operated within a single domain, with domain-specific operators, and required significant human scaffolding to define what counted as a valid discovery.
+
+The Great Discovery is **domain-agnostic**. It does not know it is reasoning about physics versus governance versus biology. It knows only topology — pressure, compression, forbidden patterns, structural holes. The domain-specific meaning emerges from what settles into the holes, not from what was programmed in.
+
+That is the unusual part. Most discovery systems are built around a domain. This one is built around a method, and the domains are what the method finds.
+
+### What This Places the Project Inside
+
+The intellectual trajectory is a known one:
+
+```
+Knowledge representation
++
+Constraint logic
++
+Structural pressure dynamics
++
+Automated question generation
+=
+Domain-agnostic discovery engine
+```
+
+Very few projects have attempted to build all four layers together. The individual pieces have long histories in computer science, philosophy, and complexity theory. Their combination — in a closed loop, running on a live graph, with recursive self-mapping — is the uncommon part.
+
+Whether it completes the dream Leibniz sketched remains an open question. What it currently does is demonstrate that the loop is real, the pressure dynamics are real, the holes are real, and the questions they produce are structurally genuine.
+
+The cathedral foundation, as someone once put it, is solid.
+
+---
+
 ## Conceptual Model
 
 The system operates like a **pressure field over a growing graph**.
