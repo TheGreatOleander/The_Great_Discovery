@@ -149,35 +149,106 @@ The difference is that Santa Fe-style complexity research primarily *analyzes* s
 
 This engine attempts something further: it *evolves* a knowledge structure under constraint pressure and watches what the structure demands. The goal is not to describe emergence but to use emergence as a discovery instrument.
 
-### Herbert Simon and Automated Discovery
+### BACON and the First Machine That Discovered Laws
 
-The question of whether machines could discover — not just compute — occupied some of the sharpest minds of the 20th century. Herbert A. Simon and Allen Newell built early programs that rediscovered laws of physics and mathematics from data. Later work produced systems that found novel scientific hypotheses in chemistry and molecular biology.
+In the late 1970s, Herbert A. Simon and Pat Langley built a program called **BACON** — one of the earliest systems to attempt genuine machine scientific discovery.
 
-Those systems were narrow by design. They operated within a single domain, with domain-specific operators, and required significant human scaffolding to define what counted as a valid discovery.
+Not curve-fitting. Not classification. Actual derivation of laws.
 
-The Great Discovery is **domain-agnostic**. It does not know it is reasoning about physics versus governance versus biology. It knows only topology — pressure, compression, forbidden patterns, structural holes. The domain-specific meaning emerges from what settles into the holes, not from what was programmed in.
+Researchers fed it experimental measurements — pressure, temperature, volume — and BACON searched for invariants: constant ratios, linear relationships, inverse proportions. From those invariants it could rediscover known scientific laws from first principles. It reconstructed relationships equivalent to Boyle's law without being told what it was looking for.
 
-That is the unusual part. Most discovery systems are built around a domain. This one is built around a method, and the domains are what the method finds.
+At the time, that was genuinely shocking. The machine wasn't finding patterns it had been shown. It was inferring structure it had never seen.
+
+BACON's loop was simple:
+
+```
+observe data
+look for invariants
+propose rule
+test rule
+refine rule
+```
+
+Automated induction. Clean, elegant, and limited.
+
+The limitation was fundamental. BACON needed clean datasets, simple variables, and known measurement structures. Give it messy real-world systems — economics, biology, governance, multi-layer networks — and the combinatorial explosion destroyed it. The number of possible relationships grew faster than any search strategy could navigate.
+
+The field that grew up around this work is called **Automated Scientific Discovery**, and it has periodically resurfaced every decade as compute improved and new approaches became viable.
+
+**The key distinction between BACON and this engine** is the level at which discovery happens.
+
+BACON discovered **laws inside datasets** — regularities in measured values.
+
+This engine discovers **missing structures inside systems** — positions in a topology that the surrounding constraints require to be filled.
+
+That is a different problem space, and a larger one. A law is a pattern across observations. A structural hole is a demand arising from the *shape of what is already known* — independent of any particular dataset, in any domain where the knowledge can be represented as a graph.
+
+Scientists don't just find laws. They notice that a model is unstable, that a prediction fails, that something must be missing — and then they invent new structures to fill the gap. The neutrino was not found by curve-fitting. It was demanded by conservation laws that didn't balance. This engine is, at its core, trying to automate that second kind of discovery: not the law inside the data, but the **necessary absence inside the structure**.
+
+Where BACON and this engine converge is on the core insight that drove Simon's program in the first place: **search guided by structural pressure is tractable where undirected search is not**. BACON used invariant detection to prune its search space. This engine uses forbidden motif accumulation and compression dynamics. Both are saying the same thing: you don't explore everything. You explore where the system is breaking.
+
+### AI Feynman and the Modern Attempt
+
+The most recent system in this lineage worth naming is **AI Feynman**, built by Max Tegmark and collaborators at MIT.
+
+AI Feynman takes a dataset describing a physical system — positions, forces, energies — and searches for the mathematical expression that best explains the relationships. It has reconstructed formulas equivalent to laws discovered by Newton and Maxwell from raw data, without being told what laws to look for.
+
+The clever part is how it avoids the combinatorial explosion that destroyed BACON. Rather than searching the full space of possible equations, it uses a staged process — detecting symmetries, splitting variables, reducing dimensionality — that narrows the problem at each step before attempting symbolic search. Guided discovery, not brute force.
+
+The philosophy behind it is Feynman's own: the laws of nature hide inside patterns, and if you can recognize the right patterns, the law reveals itself.
+
+AI Feynman is genuinely impressive work. And when you line it up against this engine, the resemblance in spirit is striking — and the difference in approach is clarifying.
+
+| | Focus | Input | Output |
+|---|---|---|---|
+| **AI Feynman** | Equation discovery | Measured data | Mathematical law |
+| **The Great Discovery** | Structure discovery | Knowledge topology | Missing structural demands |
+
+AI Feynman asks: *what equation describes this behavior?*
+
+This engine asks: *what structure explains why the behavior exists at all?*
+
+The analogy that makes this concrete: watching planets move, AI Feynman might derive `force ∝ 1/r²`. This engine would ask what structure of relationships between mass, spacetime, and curvature makes that law necessary — which is closer to what Einstein was doing when he produced general relativity. The law was already known. The structure beneath it was the discovery.
+
+Both systems are responding to the same pressure: **search guided by where the model breaks** is the only tractable approach to discovery at scale. AI Feynman uses symmetry detection to find where equations simplify. This engine uses compression spikes and forbidden motif accumulation to find where topology strains. The intuition is identical. The level of the discovery differs.
+
+The gap AI Feynman leaves open — and the gap this engine is pointed at — is domain-agnosticism. AI Feynman is a physics instrument. Its staged process assumes variables that can be measured, equations that take closed form, and relationships that are mathematically clean. Those assumptions buy a lot of power in physics. They don't transfer to economics, governance, biology, or the structure of ideas.
+
+This engine makes no such assumptions. It knows only topology. Which means it is weaker than AI Feynman in any domain where AI Feynman works well, and the only candidate for the job in every domain where AI Feynman cannot operate.
 
 ### What This Places the Project Inside
 
-The intellectual trajectory is a known one:
+The intellectual lineage runs in a straight line:
 
 ```
-Knowledge representation
-+
-Constraint logic
-+
-Structural pressure dynamics
-+
-Automated question generation
-=
-Domain-agnostic discovery engine
+Leibniz (1670s)
+  The dream: all knowledge has a symbolic shape.
+  Limit: knowledge not machine-readable, compute nonexistent.
+        ↓
+BACON / Simon & Langley (1970s)
+  The first attempt: discover laws mechanically from data.
+  Limit: narrow domains, combinatorial explosion, no system-level representation.
+        ↓
+Santa Fe complexity research (1980s–present)
+  The insight: emergent behavior in interacting systems is tractable.
+  Limit: analyzes emergence, does not use it as a discovery instrument.
+        ↓
+AI Feynman / Tegmark et al. (2019–present)
+  The refinement: guided symbolic regression recovers physical laws from data.
+  Limit: single domain, assumes mathematical cleanliness, equation-level discovery only.
+        ↓
+The Great Discovery
+  The method: structural pressure dynamics over a constraint-accumulating graph.
+  Domain-agnostic. Discovers missing structures, not just laws in data.
+  Operates where equations don't apply. Asks questions the topology demands.
+  Maps its own asking.
 ```
 
-Very few projects have attempted to build all four layers together. The individual pieces have long histories in computer science, philosophy, and complexity theory. Their combination — in a closed loop, running on a live graph, with recursive self-mapping — is the uncommon part.
+Each step expanded the scope of what machine discovery could mean. Each step also hit a specific wall. The walls that stopped each predecessor are the design constraints this engine is built around.
 
-Whether it completes the dream Leibniz sketched remains an open question. What it currently does is demonstrate that the loop is real, the pressure dynamics are real, the holes are real, and the questions they produce are structurally genuine.
+Very few projects have attempted to build all four layers simultaneously — knowledge representation, constraint logic, structural pressure dynamics, and automated question generation — operating in a closed loop on a live, recursively self-mapping graph.
+
+Whether it completes the dream Leibniz sketched, extends what BACON started, and reaches where AI Feynman cannot go, remains an open question. What it currently does is demonstrate that the loop is real, the pressure dynamics are real, the holes are real, and the questions they produce are structurally genuine.
 
 The cathedral foundation, as someone once put it, is solid.
 

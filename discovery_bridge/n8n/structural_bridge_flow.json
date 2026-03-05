@@ -1,0 +1,273 @@
+{
+  "name": "Great Discovery — Structural AI Bridge",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "structural-hole",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook — Structural Hole",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "provider",
+              "value": "anthropic"
+            },
+            {
+              "name": "schema_version",
+              "value": "1.0"
+            }
+          ],
+          "number": [
+            {
+              "name": "received_at",
+              "value": "={{ Date.now() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-metadata",
+      "name": "Set — Route Metadata",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.provider }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "anthropic",
+              "outputKey": "anthropic"
+            },
+            {
+              "value2": "openai",
+              "outputKey": "openai"
+            },
+            {
+              "value2": "lmstudio",
+              "outputKey": "lmstudio"
+            }
+          ]
+        },
+        "fallbackOutput": "anthropic"
+      },
+      "id": "switch-provider",
+      "name": "Switch — Provider Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "claude-sonnet-4-20250514",
+          "max_tokens": 512,
+          "system": "You are a structural topology completion engine for The Great Discovery system.\n\nYou receive a structural hole profile — a load-bearing absence in a knowledge graph — and must identify what concept the surrounding topology demands.\n\nVocabulary constraints (you MUST use only concepts from these lists):\n- physics: causality, symmetry, entropy, energy, field, wave, particle, force, spacetime, equilibrium, phase transition, conservation, resonance, potential\n- mathematics: structure, proof, limit, invariant, topology, recursion, axiom, function, graph, manifold, constraint, symmetry group, transformation, boundary\n- biology: emergence, adaptation, feedback, signal, membrane, replication, selection, gradient, regulation, network, threshold, homeostasis, mutation, expression\n- cognition: pattern, inference, attention, memory, abstraction, analogy, model, prediction, uncertainty, category, representation, context, salience, binding\n- systems: pressure, flow, bottleneck, coupling, oscillation, stability, attractor, perturbation, resilience, cascade, leverage, delay, nonlinearity, self-organization\n- information: compression, noise, channel, redundancy, encoding, signal, bandwidth, entropy, mutual information, error, fidelity, transmission, decoding, capacity\n\nReturn ONLY valid JSON matching this exact schema. No prose, no explanation, no markdown:\n{\n  \"concept\": \"exact concept name from vocabulary\",\n  \"domain\": \"domain name\",\n  \"confidence\": 0.0,\n  \"reasoning\": \"1-2 sentences: what structural demand makes this the right answer\"\n}",
+          "messages": [
+            {
+              "role": "user",
+              "content": "=Hole profile:\n- Source: '{{ $json.body.hole.src_concept }}' ({{ $json.body.hole.src_domain }})\n- Target: '{{ $json.body.hole.dst_concept }}' ({{ $json.body.hole.dst_domain }})\n- Type: {{ $json.body.hole.is_cross_domain ? 'cross-domain bridge' : 'within-domain depth' }}\n- Dominant relation: {{ $json.body.hole.dominant_relation }}\n- Adjacent concepts: {{ $json.body.hole.adjacent_concepts.join(', ') || 'none' }}\n- Structural precision: {{ ($json.body.hole.precision * 100).toFixed(0) }}%\n- Active domains: {{ $json.body.hole.n_domains }}\n\nQuestion: {{ $json.body.question }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-anthropic",
+      "name": "HTTP — Anthropic",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 180]
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENAI_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "gpt-4o",
+          "max_tokens": 512,
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a structural topology completion engine. Return only valid JSON: {\"concept\": string, \"domain\": string, \"confidence\": number, \"reasoning\": string}"
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.body.question }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-openai",
+      "name": "HTTP — OpenAI (stub)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 300],
+      "notes": "STUB — wire up credentials and test before activating"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:1234/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "local-model",
+          "max_tokens": 512,
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a structural topology completion engine. Return only valid JSON: {\"concept\": string, \"domain\": string, \"confidence\": number, \"reasoning\": string}"
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.body.question }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-lmstudio",
+      "name": "HTTP — LM Studio (stub)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 420],
+      "notes": "STUB — points to LM Studio default port 1234. Change model name as needed."
+    },
+    {
+      "parameters": {
+        "functionCode": "// ── Normalizer / Constitutional Gate ─────────────────────────────────────\n// Every provider response passes through here.\n// If it doesn't conform to the structural contract, it is rejected.\n// Nothing enters the graph unchecked.\n\nconst ALLOWED_DOMAINS = [\n  'physics', 'mathematics', 'biology',\n  'cognition', 'systems', 'information'\n];\n\nconst MIN_CONFIDENCE = 0.4;\n\n// Extract text content from different provider response shapes\nfunction extractText(item) {\n  // Anthropic shape: item.content[0].text\n  if (item.content && Array.isArray(item.content)) {\n    return item.content.map(c => c.text || '').join('');\n  }\n  // OpenAI shape: item.choices[0].message.content\n  if (item.choices && Array.isArray(item.choices)) {\n    return item.choices[0]?.message?.content || '';\n  }\n  // LM Studio (same as OpenAI)\n  if (item.choices) {\n    return item.choices[0]?.message?.content || '';\n  }\n  // Direct string\n  if (typeof item === 'string') return item;\n  return '';\n}\n\nlet raw;\ntry {\n  const text = extractText(items[0].json);\n  // Strip markdown fences if present\n  const cleaned = text.replace(/```json|```/g, '').trim();\n  raw = JSON.parse(cleaned);\n} catch(e) {\n  throw new Error('Normalizer: provider returned non-JSON: ' + e.message);\n}\n\n// Validate concept\nif (typeof raw.concept !== 'string' || raw.concept.trim() === '') {\n  throw new Error('Normalizer: missing concept field');\n}\n\n// Validate domain\nif (typeof raw.domain !== 'string' || !ALLOWED_DOMAINS.includes(raw.domain)) {\n  throw new Error('Normalizer: invalid domain: ' + raw.domain);\n}\n\n// Validate confidence\nif (typeof raw.confidence !== 'number') {\n  raw.confidence = 0.5; // Default if missing\n}\nif (raw.confidence < MIN_CONFIDENCE) {\n  throw new Error('Normalizer: confidence ' + raw.confidence + ' below threshold ' + MIN_CONFIDENCE);\n}\n\n// Reasoning fallback\nif (typeof raw.reasoning !== 'string') {\n  raw.reasoning = 'No reasoning provided.';\n}\n\n// Sanitize relations if present\nconst ALLOWED_RELATION_TYPES = ['supports', 'contradicts', 'extends', 'bridges'];\nif (Array.isArray(raw.relations)) {\n  raw.relations = raw.relations.filter(r =>\n    r && typeof r.to !== 'undefined' && ALLOWED_RELATION_TYPES.includes(r.type)\n  );\n} else {\n  raw.relations = [];\n}\n\nreturn [{ json: raw }];"
+      },
+      "id": "normalizer",
+      "name": "Function — Normalizer Gate",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "command": "=cd ~/great-discovery && echo '{{ JSON.stringify($json) }}' >> structural_log.jsonl && git add structural_log.jsonl && git commit -m \"structural injection: {{ $json.concept }} ({{ $json.domain }}) conf={{ $json.confidence }}\" 2>/dev/null || true"
+      },
+      "id": "git-commit",
+      "name": "Execute — Git Commit",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "notes": "Update the cd path to your actual repo location. The '|| true' prevents flow failure if git isn't configured."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond — Return to JSX",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Structural Hole": {
+      "main": [[{"node": "Set — Route Metadata", "type": "main", "index": 0}]]
+    },
+    "Set — Route Metadata": {
+      "main": [[{"node": "Switch — Provider Router", "type": "main", "index": 0}]]
+    },
+    "Switch — Provider Router": {
+      "main": [
+        [{"node": "HTTP — Anthropic", "type": "main", "index": 0}],
+        [{"node": "HTTP — OpenAI (stub)", "type": "main", "index": 0}],
+        [{"node": "HTTP — LM Studio (stub)", "type": "main", "index": 0}]
+      ]
+    },
+    "HTTP — Anthropic": {
+      "main": [[{"node": "Function — Normalizer Gate", "type": "main", "index": 0}]]
+    },
+    "HTTP — OpenAI (stub)": {
+      "main": [[{"node": "Function — Normalizer Gate", "type": "main", "index": 0}]]
+    },
+    "HTTP — LM Studio (stub)": {
+      "main": [[{"node": "Function — Normalizer Gate", "type": "main", "index": 0}]]
+    },
+    "Function — Normalizer Gate": {
+      "main": [[{"node": "Execute — Git Commit", "type": "main", "index": 0}]]
+    },
+    "Execute — Git Commit": {
+      "main": [[{"node": "Respond — Return to JSX", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["great-discovery", "structural-bridge", "ai"],
+  "_meta": {
+    "description": "The Great Discovery — Structural AI Bridge v1.0",
+    "notes": [
+      "1. Import this file into n8n via Settings > Import Workflow",
+      "2. Add your Anthropic API key under Credentials > HTTP Header Auth",
+      "   Name: 'x-api-key', Value: your key",
+      "3. Activate the webhook by clicking 'Activate' on the flow",
+      "4. Update config.js WEBHOOK_URL to match your n8n URL + port",
+      "5. Update the git commit path in 'Execute — Git Commit' node",
+      "6. OpenAI and LM Studio branches are stubs — activate when ready"
+    ]
+  }
+}
