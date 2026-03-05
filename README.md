@@ -1,7 +1,7 @@
 # The Great Discovery
 ### Discovery Pressure Engine — Structural Knowledge Mapping
 
-![The Great Discovery](images/The_Great_Discovery.png)
+![The Great Discovery](images/The_Great_Discovery.jpg)
 
 > Some people will use a symbolism of the relationship of God to the universe, wherein God is a brilliant light, only somehow veiled, hiding underneath all these forms that you see as you look around you. But the truth is funnier than that. It is that you are looking right at the brilliant light now, that the experience you are having which you call ordinary everyday consciousness - pretending you're not it - that experience is exactly the same thing as 'IT'. There's no difference at all. And when you find that out, you laugh yourself silly. That's the great discovery. In other words, when you really start to see things, and you look at an old paper cup, and you go into the nature of what it is to see, what vision is, or what smell is, or what touch is, you realize that that vision of the paper cup is the brilliant light of the cosmos. Nothing could be brighter. Ten thousand suns couldn't be brighter.
 >
