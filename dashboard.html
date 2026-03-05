@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Great Discovery — Phase 3+4</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+  :root{
+    --bg:#08080d; --panel:#0c0c14; --border:#181826; --accent:#c8a96e;
+    --hot:#e05c5c; --cold:#4a9eff; --text:#d4d0c8; --sub:#545268;
+    --forbidden:#ff4444; --settled:#44ff99; --void:#aa77ff; --semantic:#ff9944;
+    --question:#88ddff; --meta:#ffcc44; --boost:#44ffaa; --conv:#66ffcc;
+    --recursion:#dd88ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+  header{border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;position:relative;}
+  header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.3;}
+  h1{font-family:'Libre Baskerville',serif;font-style:italic;font-size:16px;color:var(--accent);}
+  .sub{font-size:8px;color:var(--sub);letter-spacing:.16em;text-transform:uppercase;margin-top:2px;}
+  .epoch-block{margin-left:auto;text-align:right;}
+  .enum{font-size:24px;font-weight:700;color:var(--accent);line-height:1;}
+  .elbl{font-size:8px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;}
+  .conv-badge{font-size:9px;margin-top:2px;padding:2px 6px;border-radius:2px;display:inline-block;}
+  .conv-exploring{color:var(--sub);border:1px solid var(--sub);}
+  .conv-stable{color:var(--conv);border:1px solid var(--conv);}
+  .conv-oscillatory{color:var(--accent);border:1px solid var(--accent);}
+  .conv-divergent{color:var(--hot);border:1px solid var(--hot);animation:blink .4s 5;}
+  .conv-deadlocked{color:var(--void);border:1px solid var(--void);}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+  .status-row{display:flex;gap:1px;padding:0 18px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+  .pill{padding:4px 10px;font-size:8px;letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid transparent;color:var(--sub);transition:all .3s;}
+  .pill.on{color:var(--accent);border-bottom-color:var(--accent);}
+  .pill.warn{color:var(--forbidden);border-bottom-color:var(--forbidden);animation:blink .5s 3;}
+  .pill.ask{color:var(--question);border-bottom-color:var(--question);animation:blink .6s 4;}
+  .pill.meta{color:var(--meta);border-bottom-color:var(--meta);animation:blink .7s 4;}
+  .pill.rec{color:var(--recursion);border-bottom-color:var(--recursion);}
+
+  .legend{display:flex;gap:8px;padding:3px 18px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+  .ld{display:flex;align-items:center;gap:4px;font-size:8px;color:var(--sub);}
+  .ldot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .lsq{width:7px;height:7px;border-radius:1px;flex-shrink:0;}
+
+  /* 5-column grid */
+  .grid{flex:1;display:grid;grid-template-columns:1fr 220px 260px 260px 200px;gap:1px;background:var(--border);overflow:hidden;min-height:0;}
+  .panel{background:var(--panel);padding:10px 12px;overflow:hidden;position:relative;display:flex;flex-direction:column;}
+  .pt{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--sub);margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .pt::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* Graph */
+  .graph-panel{position:relative;}
+  #gc{width:100%;flex:1;display:block;min-height:0;}
+  #tip{position:absolute;background:rgba(8,8,13,.97);border:1px solid var(--border);padding:6px 9px;font-size:10px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:100;max-width:190px;line-height:1.7;}
+  .tc{font-weight:700;color:var(--accent);}
+  .td2{color:var(--sub);}
+  .tr2{color:var(--settled);font-size:9px;}
+  .tb{color:var(--boost);font-size:9px;}
+
+  /* Metrics */
+  .metrics-panel{gap:8px;}
+  .metric{display:flex;flex-direction:column;gap:2px;}
+  .ml{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);display:flex;justify-content:space-between;}
+  .mv{font-size:17px;font-weight:700;line-height:1;transition:color .5s;}
+  .mb{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-top:1px;}
+  .mf{height:100%;border-radius:1px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+  .sr{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border);font-size:10px;}
+  .sl{color:var(--sub);}
+  .sw{flex:1;min-height:32px;position:relative;}
+  #sk{width:100%;height:100%;}
+
+  /* Questions panel */
+  .questions-panel{overflow-y:auto;}
+  .questions-panel::-webkit-scrollbar{width:2px;}
+  .questions-panel::-webkit-scrollbar-thumb{background:var(--border);}
+  .question-card{border:1px solid var(--border);border-left:3px solid var(--question);padding:9px 11px;margin-bottom:7px;animation:cardIn .5s ease;background:rgba(136,221,255,.02);}
+  .question-card.depth{border-left-color:var(--void);}
+  .question-card.boundary{border-left-color:var(--forbidden);}
+  .question-card.meta{border-left-color:var(--meta);background:rgba(255,204,68,.03);}
+  @keyframes cardIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+  .qcard-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+  .qcard-num{font-size:9px;font-weight:700;}
+  .qcard-type{font-size:8px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;}
+  .qcard-epoch{font-size:8px;color:var(--sub);}
+  .qcard-domains{font-size:8px;color:var(--accent);margin-bottom:4px;}
+  .qcard-concepts{font-size:8px;color:var(--sub);margin-bottom:5px;}
+  .qcard-q{font-family:'Libre Baskerville',serif;font-style:italic;font-size:11px;color:var(--text);line-height:1.5;}
+  .qcard-prec{font-size:8px;color:var(--sub);margin-top:5px;}
+  .qcard-boost{font-size:8px;color:var(--boost);margin-top:2px;}
+  .qcard-rec{font-size:8px;color:var(--recursion);margin-top:2px;}
+
+  /* Recursion panel */
+  .recursion-panel{overflow-y:auto;}
+  .recursion-panel::-webkit-scrollbar{width:2px;}
+  .recursion-panel::-webkit-scrollbar-thumb{background:var(--border);}
+  .rec-entry{padding:6px 0;border-bottom:1px solid var(--border);animation:up .3s ease;}
+  @keyframes up{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .rec-ep{font-size:8px;color:var(--sub);}
+  .rec-lbl{font-size:10px;margin:2px 0;}
+  .rec-detail{font-size:9px;color:var(--sub);line-height:1.4;}
+  .rec-token{font-size:8px;color:var(--recursion);font-family:'Space Mono',monospace;margin-top:2px;word-break:break-all;}
+
+  /* Events panel */
+  .events-panel{overflow-y:auto;}
+  .events-panel::-webkit-scrollbar{width:2px;}
+  .events-panel::-webkit-scrollbar-thumb{background:var(--border);}
+  .ev-entry{padding:5px 0;border-bottom:1px solid var(--border);animation:up .3s ease;}
+  .ev-ep{font-size:8px;color:var(--sub);}
+  .ev-lbl{font-size:10px;margin:2px 0;}
+  .ev-detail{font-size:9px;color:var(--sub);line-height:1.4;}
+
+  .controls{position:absolute;bottom:10px;right:12px;display:flex;gap:5px;z-index:10;}
+  .btn{padding:4px 11px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;transition:all .2s;}
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn.p{border-color:var(--accent);color:var(--accent);}
+  .btn.p:hover{background:var(--accent);color:var(--bg);}
+  .btn.s{border-color:var(--hot);color:var(--hot);}
+  .sg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(68,255,153,.03) 0%,transparent 70%);opacity:0;transition:opacity 2s;}
+  .sg.on{opacity:1;}
+  .empty{color:var(--sub);font-size:10px;font-style:italic;padding:6px 0;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>The Great Discovery</h1>
+    <div class="sub">Phase 3+4 — Recursion Layer — v10.x</div>
+  </div>
+  <div class="epoch-block">
+    <div class="enum" id="eNum">0</div>
+    <div class="elbl">Epoch</div>
+    <div class="conv-badge conv-exploring" id="convBadge">Exploring</div>
+  </div>
+</header>
+
+<div class="status-row">
+  <div class="pill on"  id="sEx">● Exploring</div>
+  <div class="pill"     id="sSt">◈ Settling</div>
+  <div class="pill"     id="sPr">⊙ Pressure</div>
+  <div class="pill"     id="sGv">▽ Governance</div>
+  <div class="pill"     id="sQ" >◉ Listening</div>
+  <div class="pill"     id="sRec">↻ Recursion</div>
+  <div class="pill"     id="sEv">Watching</div>
+</div>
+
+<div class="legend">
+  <div class="ld"><div class="ldot" style="background:#4a9eff"></div>physics</div>
+  <div class="ld"><div class="ldot" style="background:#c8a96e"></div>mathematics</div>
+  <div class="ld"><div class="ldot" style="background:#44ff99"></div>biology</div>
+  <div class="ld"><div class="ldot" style="background:#ff77aa"></div>cognition</div>
+  <div class="ld"><div class="ldot" style="background:#aa77ff"></div>systems</div>
+  <div class="ld"><div class="ldot" style="background:#ff9944"></div>information</div>
+  <div class="ld"><div class="ldot" style="background:var(--recursion)"></div>recursion</div>
+  <div class="ld" style="margin-left:6px">
+    <div class="ldot" style="background:var(--boost);border-radius:1px"></div>boost active
+  </div>
+  <div class="ld"><div class="lsq" style="background:var(--question)"></div>bridge Q</div>
+  <div class="ld"><div class="lsq" style="background:var(--void)"></div>depth Q</div>
+  <div class="ld"><div class="lsq" style="background:var(--forbidden)"></div>boundary Q</div>
+  <div class="ld"><div class="lsq" style="background:var(--meta)"></div>meta Q</div>
+</div>
+
+<div class="grid">
+
+  <!-- GRAPH -->
+  <div class="panel graph-panel">
+    <div class="pt">Knowledge Graph — Typed &amp; Named</div>
+    <div class="sg" id="sg"></div>
+    <canvas id="gc"></canvas>
+    <div id="tip">
+      <span class="tc" id="ttc"></span><br>
+      <span class="td2" id="ttd"></span><br>
+      <span class="tr2" id="ttr"></span><br>
+      <span class="tb" id="ttb"></span>
+    </div>
+    <div class="controls">
+      <button class="btn p" id="btnRun" onclick="toggleRun()">Run Engine</button>
+      <button class="btn" onclick="resetEngine()">Reset</button>
+    </div>
+  </div>
+
+  <!-- METRICS -->
+  <div class="panel metrics-panel">
+    <div class="pt">Pressure</div>
+    <div class="metric">
+      <div class="ml"><span>Structural</span><span id="scv">1.0000</span></div>
+      <div class="mv" id="scb" style="color:var(--cold)">1.0000</div>
+      <div class="mb"><div class="mf" id="scbar" style="width:100%;background:var(--cold)"></div></div>
+    </div>
+    <div class="metric">
+      <div class="ml"><span>Semantic</span><span id="semv">1.0000</span></div>
+      <div class="mv" id="semb" style="color:var(--semantic)">1.0000</div>
+      <div class="mb"><div class="mf" id="sembar" style="width:100%;background:var(--semantic)"></div></div>
+    </div>
+    <div class="metric">
+      <div class="ml"><span>Mismatch</span><span id="mmv">0.0000</span></div>
+      <div class="mv" id="mmb" style="color:var(--text)">0.0000</div>
+      <div class="mb"><div class="mf" id="mmbar" style="width:0%;background:var(--void)"></div></div>
+    </div>
+    <div class="metric">
+      <div class="ml"><span>Entropy</span><span id="ev">0.0000</span></div>
+      <div class="mv" id="eb" style="color:var(--accent)">0.0000</div>
+    </div>
+    <div class="metric">
+      <div class="ml"><span>Delta</span><span id="dv">+0.0000</span></div>
+      <div class="mv" id="db" style="color:var(--text)">+0.0000</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1px;margin-top:4px">
+      <div class="sr"><span class="sl">Nodes</span><span id="nc">0</span></div>
+      <div class="sr"><span class="sl">Recursion nodes</span><span id="rnc" style="color:var(--recursion)">0</span></div>
+      <div class="sr"><span class="sl">Edges</span><span id="ec">0</span></div>
+      <div class="sr"><span class="sl">Motifs</span><span id="mc">0</span></div>
+      <div class="sr"><span class="sl">Forbidden</span><span id="fc" style="color:var(--forbidden)">0</span></div>
+      <div class="sr"><span class="sl">Holes settled</span><span id="hc" style="color:var(--settled)">0</span></div>
+      <div class="sr"><span class="sl">Boosted nodes</span><span id="bc" style="color:var(--boost)">0</span></div>
+      <div class="sr"><span class="sl">Questions</span><span id="qc" style="color:var(--question)">0</span></div>
+      <div class="sr"><span class="sl">Meta-questions</span><span id="mqc" style="color:var(--meta)">0</span></div>
+    </div>
+    <div style="margin-top:6px;flex:1;display:flex;flex-direction:column;min-height:0">
+      <div class="pt">Compression</div>
+      <div class="sw"><canvas id="sk"></canvas></div>
+    </div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div class="panel questions-panel" id="questionsPanel">
+    <div class="pt">Questions the Engine Is Asking</div>
+    <div id="qLog"><div class="empty">Listening for holes precise enough to name...</div></div>
+  </div>
+
+  <!-- RECURSION -->
+  <div class="panel recursion-panel">
+    <div class="pt">Recursion Layer</div>
+    <div id="recLog"><div class="empty">Question nodes appear here when generated...</div></div>
+  </div>
+
+  <!-- EVENTS -->
+  <div class="panel events-panel">
+    <div class="pt">Events</div>
+    <div id="evLog"><div class="empty">Watching...</div></div>
+  </div>
+
+</div>
+
+<script>
+// ─── Vocabulary ────────────────────────────────────────────────────────────
+const CONCEPTS={
+  physics:["causality","symmetry","entropy","energy","field","wave","particle","force","spacetime","equilibrium","phase transition","conservation","resonance","potential"],
+  mathematics:["structure","proof","limit","invariant","topology","recursion","axiom","function","graph","manifold","constraint","symmetry group","transformation","boundary"],
+  biology:["emergence","adaptation","feedback","signal","membrane","replication","selection","gradient","regulation","network","threshold","homeostasis","mutation","expression"],
+  cognition:["pattern","inference","attention","memory","abstraction","analogy","model","prediction","uncertainty","category","representation","context","salience","binding"],
+  systems:["pressure","flow","bottleneck","coupling","oscillation","stability","attractor","perturbation","resilience","cascade","leverage","delay","nonlinearity","self-organization"],
+  information:["compression","noise","channel","redundancy","encoding","signal","bandwidth","entropy","mutual information","error","fidelity","transmission","decoding","capacity"]
+};
+const ALL_C=Object.entries(CONCEPTS).flatMap(([d,cs])=>cs.map(c=>({concept:c,domain:d})));
+const WR=["causes","requires","constrains","amplifies","stabilizes"];
+const CR=["analogous_to","is_dual_of","emerges_from"];
+const DC={"physics":"#4a9eff","mathematics":"#c8a96e","biology":"#44ff99","cognition":"#ff77aa","systems":"#aa77ff","information":"#ff9944","recursion":"#dd88ff"};
+const RI={
+  'causes':['is caused by','produces','drives'],
+  'requires':['enables','underlies','is prerequisite for'],
+  'constrains':['is bounded by','shapes','limits'],
+  'amplifies':['is strengthened by','resonates with','scales with'],
+  'stabilizes':['grounds','regulates','dampens'],
+  'emerges_from':['gives rise to','generates','produces higher-order structure in'],
+  'destabilizes':['disrupts','perturbs','breaks symmetry in'],
+  'analogous_to':['mirrors','structurally resembles','maps onto'],
+  'is_dual_of':['is the complement of','inverts','is the other face of'],
+  'related':['connects to','associates with','links']
+};
+const DEMAND_T={
+  'causes,requires':"something that is both an effect and a prerequisite",
+  'requires,emerges_from':"something that must exist before a higher-order property can arise",
+  'constrains,amplifies':"something that is both limited and strengthened simultaneously",
+  'stabilizes,causes':"something that grounds a process while initiating another",
+};
+
+const rc=()=>ALL_C[Math.floor(Math.random()*ALL_C.length)];
+const rR=(a,b)=>a===b?WR[Math.floor(Math.random()*WR.length)]:CR[Math.floor(Math.random()*CR.length)];
+const dc=d=>DC[d]||"#666688";
+const pick=a=>a&&a.length?a[Math.floor(Math.random()*a.length)]:'connects to';
+const dom=a=>{if(!a||!a.length)return null;const c={};a.forEach(i=>c[i]=(c[i]||0)+1);return Object.entries(c).sort((x,y)=>y[1]-x[1])[0][0];};
+
+// ─── State ────────────────────────────────────────────────────────────────
+const E={
+  running:false,epoch:0,nodes:[],edges:[],motifs:{},
+  compression:1,semC:1,mm:0,entropy:0,lastC:1,hist:[],
+  fCount:0,hCount:0,qCount:0,mqCount:0,recCount:0,
+  boostedNodes:new Set(),
+  forbidden_domains:{},  // domain_set -> spike
+  convState:'Exploring',
+  interval:null,speed:550,
+  askedHoles:new Set()
+};
+
+// ─── Canvas ────────────────────────────────────────────────────────────────
+const canvas=document.getElementById('gc'),ctx=canvas.getContext('2d');
+const tip=document.getElementById('tip');
+let hov=null;
+function resize(){const r=canvas.parentElement.getBoundingClientRect();canvas.width=r.width;canvas.height=r.height-44;}
+window.addEventListener('resize',resize);resize();
+
+canvas.addEventListener('mousemove',e=>{
+  const r=canvas.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  hov=null;
+  for(const n of E.nodes){const dx=n.x-mx,dy=n.y-my;if(Math.sqrt(dx*dx+dy*dy)<13){hov=n;break;}}
+  if(hov){
+    document.getElementById('ttc').textContent=hov.concept;
+    document.getElementById('ttd').textContent=hov.domain+(hov.isRecursion?' [recursion]':'');
+    const rels=E.edges.filter(e=>e.src===hov.id||e.dst===hov.id).map(e=>e.rel);
+    document.getElementById('ttr').textContent=[...new Set(rels)].join(', ')||'—';
+    document.getElementById('ttb').textContent=hov.boost>0?`boost: ${hov.boost.toFixed(2)}`:'';
+    tip.style.left=(e.clientX-r.left+14)+'px';tip.style.top=(e.clientY-r.top-10)+'px';tip.style.opacity='1';
+  }else tip.style.opacity='0';
+});
+
+// ─── Physics ──────────────────────────────────────────────────────────────
+function force(){
+  const N=E.nodes.length;if(N<2)return;
+  const cx=canvas.width/2,cy=canvas.height/2;
+  for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){
+    const a=E.nodes[i],b=E.nodes[j];
+    const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
+    // Recursion nodes cluster together with stronger repulsion from others
+    const baseF=a.isRecursion!==b.isRecursion?2800:a.domain===b.domain?2200:1800;
+    const f=baseF/(dist*dist);
+    const fx=(dx/dist)*f,fy=(dy/dist)*f;
+    a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
+  }
+  for(const e of E.edges){
+    const a=E.nodes[e.src],b=E.nodes[e.dst];if(!a||!b)continue;
+    const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
+    const f=dist*0.012*(e.w||1);const fx=(dx/dist)*f,fy=(dy/dist)*f;
+    a.vx+=fx;a.vy+=fy;b.vx-=fx;b.vy-=fy;
+  }
+  for(const n of E.nodes){
+    n.vx+=(cx-n.x)*.0013;n.vy+=(cy-n.y)*.0013;
+    n.vx*=.80;n.vy*=.80;n.x+=n.vx;n.y+=n.vy;
+    n.x=Math.max(20,Math.min(canvas.width-20,n.x));
+    n.y=Math.max(20,Math.min(canvas.height-20,n.y));
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // Grid
+  ctx.strokeStyle='rgba(24,24,38,.5)';ctx.lineWidth=.5;
+  for(let x=0;x<canvas.width;x+=44){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}
+  for(let y=0;y<canvas.height;y+=44){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}
+
+  // Edges
+  for(const e of E.edges){
+    const a=E.nodes[e.src],b=E.nodes[e.dst];if(!a||!b)continue;
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+    if(a.forbidden||b.forbidden){ctx.strokeStyle='rgba(255,68,68,.35)';ctx.lineWidth=1.5;}
+    else if(a.isRecursion||b.isRecursion){ctx.strokeStyle='rgba(221,136,255,.3)';ctx.lineWidth=1.2;}
+    else if(a.domain!==b.domain){ctx.strokeStyle='rgba(136,221,255,.18)';ctx.lineWidth=1.2;}
+    else{ctx.strokeStyle='rgba(200,169,110,.1)';ctx.lineWidth=.7;}
+    ctx.stroke();
+  }
+
+  // Nodes
+  for(const n of E.nodes){
+    const r=4+Math.min(n.deg*1.1,9),col=dc(n.domain);
+    const age=E.epoch-n.age,fresh=Math.max(0,1-age/10);
+
+    // Boost aura
+    if(n.boost>0){
+      const bAlpha=Math.min(n.boost/1.2,.5);
+      const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*5);
+      g.addColorStop(0,`rgba(68,255,170,${bAlpha})`);g.addColorStop(1,'transparent');
+      ctx.beginPath();ctx.arc(n.x,n.y,r*5,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    }
+
+    // Settle flash
+    if(n.js>0){
+      const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*4);
+      g.addColorStop(0,`rgba(68,255,153,${.3*n.js})`);g.addColorStop(1,'transparent');
+      ctx.beginPath();ctx.arc(n.x,n.y,r*4,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+      n.js=Math.max(0,n.js-.04);
+    }
+
+    // Recursion node glow
+    if(n.isRecursion){
+      const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*4);
+      g.addColorStop(0,'rgba(221,136,255,.2)');g.addColorStop(1,'transparent');
+      ctx.beginPath();ctx.arc(n.x,n.y,r*4,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    }
+
+    // Fresh glow
+    if(fresh>0){
+      const rgb=col.match(/[\da-f]{2}/gi)||['60','60','80'];
+      const ri=parseInt(rgb[0]||'60',16),gi=parseInt(rgb[1]||'60',16),bi=parseInt(rgb[2]||'80',16);
+      const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*2.5);
+      g.addColorStop(0,`rgba(${ri},${gi},${bi},${.2*fresh})`);g.addColorStop(1,'transparent');
+      ctx.beginPath();ctx.arc(n.x,n.y,r*2.5,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    }
+
+    // Node body — recursion nodes are diamonds
+    if(n.isRecursion){
+      ctx.beginPath();
+      ctx.moveTo(n.x,n.y-r-2);ctx.lineTo(n.x+r+2,n.y);
+      ctx.lineTo(n.x,n.y+r+2);ctx.lineTo(n.x-r-2,n.y);
+      ctx.closePath();
+      ctx.fillStyle='#dd88ff';ctx.fill();
+    }else{
+      ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);
+      ctx.fillStyle=n.forbidden?'#ff4444':col;ctx.fill();
+    }
+
+    if(hov&&hov.id===n.id){
+      ctx.beginPath();ctx.arc(n.x,n.y,r+4,0,Math.PI*2);
+      ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1;ctx.stroke();
+    }
+
+    if(n.deg>=3||fresh>.5||n.isRecursion){
+      const alpha=Math.max(.35,Math.min(1,n.deg/6));
+      ctx.fillStyle=`rgba(212,208,200,${alpha})`;
+      const label=n.isRecursion?n.concept.split(':')[0]+'↻':n.concept;
+      ctx.font=`${(fresh>.5||n.isRecursion)?'bold ':''} 8px Space Mono`;
+      ctx.fillText(label,n.x+r+3,n.y+3);
+    }
+  }
+}
+requestAnimationFrame(function loop(){force();draw();requestAnimationFrame(loop);});
+
+// ─── Convergence state ────────────────────────────────────────────────────
+function updateConvBadge(state){
+  const badge=document.getElementById('convBadge');
+  badge.textContent=state;
+  badge.className='conv-badge conv-'+state.toLowerCase();
+  E.convState=state;
+}
+
+function classifyConvergence(){
+  if(E.hist.length<8)return'Exploring';
+  const w=E.hist.slice(-8);
+  const deltas=w.slice(1).map((v,i)=>Math.abs(v-w[i]));
+  const meanDelta=deltas.reduce((a,b)=>a+b,0)/deltas.length;
+  const lastDelta=Math.abs(E.compression-E.lastC);
+  if(lastDelta>0.15)return'Divergent';
+  if(meanDelta<0.01)return'Stable';
+  // Simple autocorrelation check for oscillation
+  const mean=deltas.reduce((a,b)=>a+b,0)/deltas.length;
+  const d=deltas.map(x=>x-mean);
+  const v=d.reduce((a,x)=>a+x*x,0);
+  if(v>1e-12){
+    for(let k=2;k<=4;k++){
+      const ac=d.slice(k).reduce((a,x,i)=>a+x*d[i],0)/v;
+      if(ac>0.6)return'Oscillatory';
+    }
+  }
+  return'Oscillatory';
+}
+
+// ─── Engine ───────────────────────────────────────────────────────────────
+function buildField(){
+  const deg={};
+  for(const e of E.edges){deg[e.src]=(deg[e.src]||0)+1;deg[e.dst]=(deg[e.dst]||0)+1;}
+  const maxD=Math.max(...Object.values(deg),1);
+  const edgeSet=new Set(E.edges.map(e=>`${e.src},${e.dst}`));
+  const domC={};E.nodes.forEach(n=>domC[n.domain]=(domC[n.domain]||0)+1);
+  const maxDom=Math.max(...Object.values(domC),1);
+  const field={};
+  for(const n of E.nodes){
+    if(n.isRecursion)continue; // Recursion nodes aren't targets for new growth
+    const d=deg[n.id]||0,pull=d/maxD;
+    const nb=new Set();
+    for(const e of E.edges){if(e.src===n.id)nb.add(e.dst);if(e.dst===n.id)nb.add(e.src);}
+    let imp=0;
+    for(const b of nb)for(const e of E.edges)if(e.src===b&&e.dst!==n.id&&!edgeSet.has(`${n.id},${e.dst}`))imp++;
+    const vd=d===0?1:(1-d/Math.max(d+imp,1))*(1/(1+d*.3));
+    const sp=1-(domC[n.domain]||1)/maxDom;
+    const boost=n.boost||0;
+
+    // Domain-aware repulsion
+    let push=0;
+    if(d>maxD*.6&&Object.keys(E.forbidden_domains).length>0){
+      const nbDomains=Array.from(nb).map(nb2=>{const nn=E.nodes[nb2];return nn?nn.domain:'';}).filter(Boolean);
+      const nodeDomSet=[n.domain,...nbDomains].slice(0,4);
+      let relevantSpike=0;
+      for(const[ds,sp2]of Object.entries(E.forbidden_domains)){
+        const fdDomains=new Set(ds.split(','));
+        if(nodeDomSet.some(d=>fdDomains.has(d)))relevantSpike+=sp2;
+      }
+      const sameFrac=nbDomains.filter(d=>d===n.domain).length/Math.max(nbDomains.length,1);
+      push=0.4*relevantSpike*sameFrac*(d/maxD);
+    }
+
+    field[n.id]=Math.max(pull+vd*1.4+sp*.8+boost*.5-push,.001);
+  }
+  return field;
+}
+
+function sfField(field,temp=0.4){
+  const ns=Object.keys(field).map(Number),sc=ns.map(n=>field[n]);
+  const mx=Math.max(...sc),ex=sc.map(s=>Math.exp((s-mx)/temp)),tot=ex.reduce((a,b)=>a+b,0);
+  const pr=ex.map(e=>e/tot);let r=Math.random(),cum=0;
+  for(let i=0;i<ns.length;i++){cum+=pr[i];if(r<=cum)return ns[i];}
+  return ns[ns.length-1];
+}
+
+function addNode(concept,domain,isRecursion=false){
+  const cx=canvas.width/2,cy=canvas.height/2,a=Math.random()*Math.PI*2;
+  const rr=80+Math.random()*(Math.min(canvas.width,canvas.height)*.3);
+  const n={id:E.nodes.length,x:cx+Math.cos(a)*rr*(0.4+Math.random()*.6),y:cy+Math.sin(a)*rr*(0.4+Math.random()*.6),
+    vx:0,vy:0,concept,domain,deg:0,age:E.epoch,forbidden:false,js:0,boost:0,isRecursion};
+  E.nodes.push(n);return n;
+}
+function addEdge(s,d,rel,w){
+  E.edges.push({src:s,dst:d,rel:rel||'related',w:w||.7});
+  if(E.nodes[s])E.nodes[s].deg++;if(E.nodes[d])E.nodes[d].deg++;
+}
+
+function engineExplore(){
+  const{concept,domain}=rc();const nn=addNode(concept,domain);
+  if(E.nodes.length<2)return;
+  const temp=E.convState==='Divergent'?0.6:0.4;
+  const field=buildField();delete field[nn.id];
+  let tgt;
+  if(Math.random()<.7&&Object.keys(field).length>0){
+    tgt=E.nodes[sfField(field,temp)]||E.nodes[Math.floor(Math.random()*E.nodes.length)];
+  }else{
+    tgt=E.nodes[Math.floor(Math.random()*(E.nodes.length-1))];
+  }
+  if(tgt)addEdge(nn.id,tgt.id,rR(domain,tgt.domain),.6+Math.random()*.4);
+}
+
+function settle(){
+  const edgeSet=new Set(E.edges.map(e=>`${e.src},${e.dst}`));
+  const deg={};for(const e of E.edges){deg[e.src]=(deg[e.src]||0)+1;deg[e.dst]=(deg[e.dst]||0)+1;}
+  const cands=[];
+  for(const e1 of E.edges)for(const e2 of E.edges)
+    if(e1.dst===e2.src&&e1.src!==e2.dst&&!edgeSet.has(`${e1.src},${e2.dst}`)){
+      cands.push({sc:(1/(1+(deg[e1.src]||0)*.2))+(1/(1+(deg[e2.dst]||0)*.2)),a:e1.src,d:e2.dst});
+    }
+  if(!cands.length)return[];
+  cands.sort((a,b)=>b.sc-a.sc);const top=cands.slice(0,9);top.sort(()=>Math.random()-.5);
+  const settled=[];
+  for(const c of top.slice(0,3)){
+    if(edgeSet.has(`${c.a},${c.d}`))continue;
+    // Respect hold: skip if either node has active boost
+    const na=E.nodes[c.a],nd=E.nodes[c.d];
+    if(na&&na.boost>0.3)continue;
+    if(nd&&nd.boost>0.3)continue;
+    const rel=rR((na||{domain:'systems'}).domain,(nd||{domain:'systems'}).domain);
+    addEdge(c.a,c.d,rel,.7+Math.random()*.3);edgeSet.add(`${c.a},${c.d}`);
+    if(na)na.js=1;if(nd)nd.js=1;
+    E.hCount++;settled.push({a:c.a,d:c.d});
+  }
+  return settled;
+}
+
+function pressure(){
+  const N=E.nodes.length;if(N<3)return;
+  const edgeSet=new Set(E.edges.map(e=>`${e.src},${e.dst}`));
+  const sample=E.nodes.filter(n=>!n.isRecursion).slice(-30).map(n=>n.id);
+  const sc={},sem={};
+  for(const t of combs(sample.length>=3?sample:E.nodes.filter(n=>!n.isRecursion).map(n=>n.id),3)){
+    const ts=new Set(t);
+    const se=E.edges.filter(e=>ts.has(e.src)&&ts.has(e.dst));
+    const es2=new Set(se.map(e=>`${e.src},${e.dst}`));
+    const sig=csig(t,es2);sc[sig]=(sc[sig]||0)+1;
+    const cs2=t.map(id=>(E.nodes[id]||{concept:'?'}).concept).sort().join(',');
+    const rs=[...new Set(se.map(e=>e.rel))].sort().join(',');
+    sem[`${sig}|${cs2}|${rs}`]=(sem[`${sig}|${cs2}|${rs}`]||0)+1;
+    E.motifs[sig]=(E.motifs[sig]||0)+1;
+  }
+  const sT=Math.max(Object.values(sc).reduce((a,b)=>a+b,0),1),sU=Object.keys(sc).length;
+  let ent=0;Object.values(sc).forEach(v=>{const p=v/sT;if(p>0)ent-=p*Math.log(p);});
+  const semT=Math.max(Object.values(sem).reduce((a,b)=>a+b,0),1),semU=Object.keys(sem).length;
+  E.compression=sU/sT;E.semC=semU/semT;E.mm=Math.abs(E.compression-E.semC);E.entropy=ent;
+  E.hist.push(E.compression);if(E.hist.length>80)E.hist.shift();
+}
+
+function combs(arr,k){
+  const r=[];function h(s,c){if(c.length===k){r.push([...c]);return;}for(let i=s;i<arr.length;i++){c.push(arr[i]);h(i+1,c);c.pop();}}
+  h(0,[]);return r.length>200?r.slice(0,200):r;
+}
+function csig(nodes,es){
+  const ps=perm(nodes);let b=null;
+  for(const p of ps){const ix={};p.forEach((n,i)=>ix[n]=i);let s='';
+    for(let i=0;i<p.length;i++)for(let j=0;j<p.length;j++)s+=es.has(`${p[i]},${p[j]}`)?'1':'0';
+    if(!b||s<b)b=s;}return b;
+}
+function perm(a){if(a.length<=1)return[a];const r=[];for(let i=0;i<a.length;i++){const rest=[...a.slice(0,i),...a.slice(i+1)];for(const p of perm(rest))r.push([a[i],...p]);}return r;}
+
+function detectForbidden(){
+  const spike=E.compression-E.lastC;
+  if(spike>.15){
+    E.fCount++;
+    const n=E.nodes.filter(n=>!n.isRecursion)[Math.floor(Math.random()*E.nodes.filter(n=>!n.isRecursion).length)];
+    if(n){n.forbidden=true;setTimeout(()=>n.forbidden=false,2500);}
+    // Record domain context
+    const recentDomains=E.nodes.slice(-30).map(n=>n.domain).filter(d=>d!=='recursion');
+    const dc2={};recentDomains.forEach(d=>dc2[d]=(dc2[d]||0)+1);
+    const top2=Object.entries(dc2).sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]).sort();
+    const ds=top2.join(',');
+    E.forbidden_domains[ds]=(E.forbidden_domains[ds]||0)+spike;
+    return spike;
+  }return null;
+}
+
+function decayBoosts(){
+  for(const n of E.nodes){
+    if(n.boost>0){n.boost=Math.max(0,n.boost-0.15);}
+  }
+}
+
+// ─── Questions ───────────────────────────────────────────────────────────
+function findNameableHoles(){
+  const edgeSet=new Set(E.edges.map(e=>`${e.src},${e.dst}`));
+  const deg={};for(const e of E.edges){deg[e.src]=(deg[e.src]||0)+1;deg[e.dst]=(deg[e.dst]||0)+1;}
+  const cands=[];const seen=new Set();
+  const domainNodes=E.nodes.filter(n=>!n.isRecursion);
+  for(const e1 of E.edges)for(const e2 of E.edges){
+    if(e1.dst===e2.src&&e1.src!==e2.dst&&!edgeSet.has(`${e1.src},${e2.dst}`)){
+      const na=E.nodes[e1.src],nd=E.nodes[e2.dst];
+      if(!na||!nd||na.isRecursion||nd.isRecursion)continue;
+      const key=`${Math.min(e1.src,e2.dst)},${Math.max(e1.src,e2.dst)}`;
+      if(!seen.has(key)){seen.add(key);cands.push({urg:deg[e1.src]+deg[e2.dst],a:e1.src,d:e2.dst});}
+    }
+  }
+  cands.sort((a,b)=>b.urg-a.urg);
+  const profiles=[];
+  for(const c of cands.slice(0,20)){
+    const key=`${c.a},${c.d}`;
+    if(E.askedHoles.has(key))continue;
+    const p=analyzeHole(c.a,c.d);
+    if(p){profiles.push(p);if(profiles.length>=2)break;}
+  }
+  return profiles;
+}
+
+function analyzeHole(srcId,dstId){
+  const nd={};for(const n of E.nodes)nd[n.id]={concept:n.concept,domain:n.domain};
+  if(!nd[srcId]||!nd[dstId])return null;
+  const nb=new Set([srcId,dstId]);
+  for(const e of E.edges)if(e.src===srcId||e.dst===srcId||e.src===dstId||e.dst===dstId){nb.add(e.src);nb.add(e.dst);}
+  const nbNodes=[...nb].filter(id=>nd[id]).map(id=>nd[id]);
+  const nbEdges=E.edges.filter(e=>nb.has(e.src)&&nb.has(e.dst));
+  if(nbNodes.length<3)return null;
+  const domains=nbNodes.map(n=>n.domain).filter(d=>d!=='recursion');
+  const domC={};domains.forEach(d=>domC[d]=(domC[d]||0)+1);
+  if(Object.keys(domC).length<2)return null;
+  const rels=nbEdges.map(e=>e.rel);
+  const relC={};rels.forEach(r=>relC[r]=(relC[r]||0)+1);
+  const topRel=Object.entries(relC).sort((a,b)=>b[1]-a[1])[0]?.[0]||'related';
+  const prec=rels.length?relC[topRel]/rels.length:0;
+  if(prec<0.55)return null;
+  const inb=nbEdges.filter(e=>e.dst===srcId).map(e=>e.rel);
+  const outb=nbEdges.filter(e=>e.src===dstId).map(e=>e.rel);
+  const adjC=new Set();
+  nbEdges.forEach(e=>{if(e.src===srcId&&nd[e.dst])adjC.add(nd[e.dst].concept);if(e.dst===dstId&&nd[e.src])adjC.add(nd[e.src].concept);});
+  return{src_id:srcId,dst_id:dstId,src_concept:nd[srcId].concept,dst_concept:nd[dstId].concept,
+    src_domain:nd[srcId].domain,dst_domain:nd[dstId].domain,
+    border_domains:Array.from(new Set([nd[srcId].domain,nd[dstId].domain])).sort(),
+    is_cross_domain:nd[srcId].domain!==nd[dstId].domain,
+    adjacent_concepts:[...adjC].slice(0,5),dominant_relation:topRel,
+    top_relations:Object.entries(relC).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]),
+    inbound_relations:[...new Set(inb)],outbound_relations:[...new Set(outb)],
+    precision:prec,n_domains:Object.keys(domC).length,domain_counts:domC,
+    forbidden_adjacent:E.fCount>0,neighborhood_size:nbNodes.length};
+}
+
+function composeQuestion(p){
+  const src=p.src_concept,dst=p.dst_concept,sdom=p.src_domain,ddom=p.dst_domain;
+  const rel=p.dominant_relation,adj=p.adjacent_concepts,top=p.top_relations;
+  const inb=p.inbound_relations,outb=p.outbound_relations;
+  const rp=s=>pick(RI[s]||['connects to']);
+  let qtype,question;
+  if(p.forbidden_adjacent&&p.n_domains>=2)qtype='boundary';
+  else if(p.is_cross_domain)qtype='bridge';
+  else qtype='depth';
+  if(qtype==='bridge'){
+    const inR=dom(inb)||rel,outR=dom(outb)||rel;
+    const out_phrase=rp(outR);
+    if(adj.length){
+      question=`What lies between ${sdom} and ${ddom} where '${src}' ${rp(rel)} something that in turn ${out_phrase} '${dst}'? The surrounding structure includes '${adj[0]}' — what does the gap demand?`;
+    }else{
+      question=`What concept does ${sdom} share with ${ddom} that '${src}' ${rp(rel)} and '${dst}' depends on?`;
+    }
+  }else if(qtype==='depth'){
+    const sec=top[1]||rel;
+    if(adj.length>=2){
+      question=`Within ${sdom}: what does '${src}' ${rp(rel)} that also ${rp(sec)} '${dst}', given that '${adj[0]}' already occupies the adjacent position?`;
+    }else{
+      question=`Within ${sdom}: what concept sits between '${src}' and '${dst}' such that '${src}' ${rp(rel)} it and it is required for '${dst}' to function?`;
+    }
+  }else{
+    const border=p.border_domains.join(' and ');
+    if(adj.length){
+      question=`At the boundary of ${border}: what must exist between '${src}' and '${dst}' that ${rp(rel)} the surrounding structure, given that configurations similar to '${adj[0]}' have been ruled out?`;
+    }else{
+      question=`At the edge where ${sdom} meets ${ddom}: what concept is required between '${src}' and '${dst}' that the forbidden structure cannot be?`;
+    }
+  }
+  return{question,type:qtype,precision:p.precision,domains:p.border_domains,
+    key_concepts:[src,dst],relation:rel,src_domain:sdom,dst_domain:ddom,
+    src_id:p.src_id,dst_id:p.dst_id};
+}
+
+function findMetaHoles(){
+  const recNodes=E.nodes.filter(n=>n.isRecursion);
+  if(recNodes.length<3)return[];
+  const recIds=new Set(recNodes.map(n=>n.id));
+  const recEdges=E.edges.filter(e=>recIds.has(e.src)&&recIds.has(e.dst));
+  const edgeSet=new Set(recEdges.map(e=>`${e.src},${e.dst}`));
+  const mh=[];const seen=new Set();
+  for(const e1 of recEdges)for(const e2 of recEdges){
+    if(e1.dst===e2.src&&e1.src!==e2.dst&&!edgeSet.has(`${e1.src},${e2.dst}`)){
+      const key=`${Math.min(e1.src,e2.dst)},${Math.max(e1.src,e2.dst)}`;
+      if(!seen.has(key)){seen.add(key);mh.push([e1.src,e2.dst]);}
+    }
+  }
+  return mh;
+}
+
+function composeMetaQuestion(srcRec,dstRec){
+  const parseToken=t=>{const p=t.split(':');return p.length>=4?{type:p[0],sd:p[1],dd:p[2],rel:p[3]}:{type:'?',sd:'?',dd:'?',rel:'?'};};
+  const s=parseToken(srcRec.concept),d=parseToken(dstRec.concept);
+  const sb=`${s.sd}/${s.dd}`,db=`${d.sd}/${d.dd}`;
+  let question;
+  if(s.type===d.type&&s.rel===d.rel){
+    question=`Both '${sb}' and '${db}' produce ${s.type} questions about '${s.rel}' relationships. What structural principle makes the same question shape appear at both boundaries?`;
+  }else{
+    const shared=[s.sd,s.dd].filter(x=>[d.sd,d.dd].includes(x));
+    if(shared.length){
+      question=`Two ${s.type} questions both touch '${shared[0]}' — one from the ${sb} boundary, one from ${db}. What is it about '${shared[0]}' that makes it a recurring site for this type of structural gap?`;
+    }else{
+      question=`The engine has asked about the gap at '${sb}' (${s.type}, ${s.rel}) and the gap at '${db}' (${d.type}, ${d.rel}). What structural relationship between these two gaps does the topology imply but has not yet named?`;
+    }
+  }
+  return{question,type:'meta',precision:.6,domains:['recursion'],key_concepts:[srcRec.concept,dstRec.concept],is_meta:true};
+}
+
+function injectQuestionNode(q){
+  const token=`${q.type}:${q.src_domain}:${q.dst_domain}:${q.relation}`;
+  const nn=addNode(token,'recursion',true);
+  nn.isQuestion=true;
+  E.recCount++;
+  // Edges: src→qnode (emerges_from), qnode→dst (requires)
+  if(q.src_id!==undefined&&E.nodes[q.src_id]){addEdge(q.src_id,nn.id,'emerges_from',.75);}
+  if(q.dst_id!==undefined&&E.nodes[q.dst_id]){addEdge(nn.id,q.dst_id,'requires',.85);}
+  // Link to similar question nodes
+  for(const rn of E.nodes.filter(n=>n.isRecursion&&n.id!==nn.id)){
+    const rparts=rn.concept.split(':'),nparts=token.split(':');
+    if(rparts.length>=4&&nparts.length>=4){
+      const sameType=rparts[0]===nparts[0],sameRel=rparts[3]===nparts[3];
+      const sharedDom=new Set([rparts[1],rparts[2]]).has(nparts[1])||new Set([rparts[1],rparts[2]]).has(nparts[2]);
+      if((sameType&&sameRel)||sharedDom){addEdge(nn.id,rn.id,'analogous_to',.5);}
+    }
+  }
+  return nn;
+}
+
+function applyBoost(srcId,dstId,precision){
+  const boost=precision*1.2;
+  if(E.nodes[srcId])E.nodes[srcId].boost=Math.min((E.nodes[srcId].boost||0)+boost,3.0);
+  if(E.nodes[dstId])E.nodes[dstId].boost=Math.min((E.nodes[dstId].boost||0)+boost,3.0);
+}
+
+function runQuestioner(){
+  if(E.epoch<8)return{questions:[],meta:[]};
+  const profiles=findNameableHoles();
+  const questions=[];
+  for(const p of profiles){
+    const key=`${p.src_id},${p.dst_id}`;
+    if(E.askedHoles.has(key))continue;
+    E.askedHoles.add(key);
+    const q=composeQuestion(p);
+    questions.push(q);
+    E.qCount++;
+    applyBoost(p.src_id,p.dst_id,p.precision);
+    injectQuestionNode(q);
+  }
+  // Meta-questions
+  const meta=[];
+  if(E.epoch%5===0){
+    const mh=findMetaHoles();
+    for(const[sid,did]of mh.slice(0,2)){
+      const sn=E.nodes[sid],dn=E.nodes[did];
+      if(!sn||!dn)continue;
+      const mq=composeMetaQuestion(sn,dn);
+      meta.push(mq);E.mqCount++;
+    }
+  }
+  return{questions,meta};
+}
+
+// ─── Epoch ────────────────────────────────────────────────────────────────
+function runEpoch(){
+  E.epoch++;document.getElementById('eNum').textContent=E.epoch;
+  pill('sEx',true,false,'● Exploring');engineExplore();
+  pill('sSt',true,false,'◈ Settling');settle();
+  decayBoosts();
+  pill('sPr',true,false,'⊙ Pressure');pressure();
+  pill('sGv',true,false,'▽ Governance');
+  const fSpike=detectForbidden();
+  E.lastC=E.compression;
+
+  const conv=classifyConvergence();
+  updateConvBadge(conv);
+
+  pill('sQ',true,false,'◉ Listening');
+  const{questions,meta}=runQuestioner();
+
+  updateMetrics();spark();
+
+  if(fSpike){
+    pill('sEv',true,true,`⚡ Forbidden #${E.fCount}`);
+    logEv('f',{epoch:E.epoch,spike:fSpike});
+  }else{
+    pill('sEv',false,false,'Watching');
+  }
+
+  for(const q of questions){logQuestion(q);logEv('q',{epoch:E.epoch,...q});}
+  for(const mq of meta){logQuestion(mq);logEv('mq',{epoch:E.epoch,...mq});}
+
+  const recNodes=E.nodes.filter(n=>n.isRecursion);
+  if(recNodes.length>0){pill('sRec',true,false,`↻ ${recNodes.length} rec`);}
+
+  document.getElementById('sg').classList.toggle('on',E.compression<.4);
+}
+
+// ─── UI ───────────────────────────────────────────────────────────────────
+function pill(id,on,warn,label){const el=document.getElementById(id);if(label)el.textContent=label;el.className='pill'+(on?' on':'')+(warn?' warn':'');}
+
+function updateMetrics(){
+  const c=E.compression,sem=E.semC,m=E.mm;
+  const cC=c>.7?'var(--cold)':c>.4?'var(--accent)':'var(--hot)';
+  const mC=m>.3?'var(--hot)':m>.15?'var(--void)':'var(--text)';
+  const d=E.compression-E.lastC;
+  const sv=(id,val,col)=>{const el=document.getElementById(id);el.textContent=val;if(col)el.style.color=col;};
+  sv('scv',c.toFixed(4));sv('scb',c.toFixed(4),cC);
+  sv('semv',sem.toFixed(4));sv('semb',sem.toFixed(4),'var(--semantic)');
+  sv('mmv',m.toFixed(4));sv('mmb',m.toFixed(4),mC);
+  sv('ev',E.entropy.toFixed(4));sv('eb',E.entropy.toFixed(4));
+  sv('dv',(d>=0?'+':'')+d.toFixed(4));sv('db',(d>=0?'+':'')+d.toFixed(4),d>.05?'var(--hot)':d<-.02?'var(--settled)':'var(--text)');
+  document.getElementById('scbar').style.cssText=`width:${c*100}%;background:${cC}`;
+  document.getElementById('sembar').style.width=(sem*100)+'%';
+  document.getElementById('mmbar').style.width=(m*300)+'%';
+  const boosted=E.nodes.filter(n=>n.boost>0).length;
+  const recN=E.nodes.filter(n=>n.isRecursion).length;
+  sv('nc',''+E.nodes.length);sv('rnc',''+recN);sv('ec',''+E.edges.length);
+  sv('mc',''+Object.keys(E.motifs).length);sv('fc',''+E.fCount);
+  sv('hc',''+E.hCount);sv('bc',''+boosted);sv('qc',''+E.qCount);sv('mqc',''+E.mqCount);
+}
+
+function logQuestion(q){
+  const log=document.getElementById('qLog');
+  const em=log.querySelector('.empty');if(em)em.remove();
+  const isMeta=q.type==='meta'||q.is_meta;
+  const col=isMeta?'var(--meta)':q.type==='bridge'?'var(--question)':q.type==='depth'?'var(--void)':'var(--forbidden)';
+  const div=document.createElement('div');
+  div.className=`question-card ${q.type}`;
+  const num=isMeta?`M#${E.mqCount}`:`Q#${E.qCount}`;
+  div.innerHTML=`
+    <div class="qcard-header">
+      <span class="qcard-num" style="color:${col}">${num}</span>
+      <span class="qcard-type">${q.type}</span>
+      <span class="qcard-epoch">E${E.epoch}</span>
+    </div>
+    <div class="qcard-domains">${(q.domains||[]).join(' × ')}</div>
+    <div class="qcard-concepts">'${(q.key_concepts||[]).join("' ↔ '")}'</div>
+    <div class="qcard-q">${q.question}</div>
+    <div class="qcard-prec">precision ${((q.precision||0)*100).toFixed(0)}%</div>
+    ${!isMeta&&q.src_id!==undefined?`<div class="qcard-boost">↑ boost → nodes ${q.src_id}, ${q.dst_id}</div>`:''}
+    ${!isMeta?`<div class="qcard-rec">↻ injected as recursion node</div>`:''}
+  `;
+  log.insertBefore(div,log.firstChild);
+  while(log.children.length>12)log.removeChild(log.lastChild);
+
+  // Flash pill
+  const sq=document.getElementById('sQ');
+  sq.textContent=isMeta?`◉ M#${E.mqCount} meta`:`◉ Q#${E.qCount} asked`;
+  sq.className=isMeta?'pill meta':'pill ask';
+  setTimeout(()=>{sq.textContent='◉ Listening';sq.className='pill on';},3000);
+
+  // Log to recursion panel if it's a regular question (has a node)
+  if(!isMeta){
+    const rlog=document.getElementById('recLog');
+    const rem=rlog.querySelector('.empty');if(rem)rem.remove();
+    const token=`${q.type}:${q.src_domain}:${q.dst_domain}:${q.relation}`;
+    const rdiv=document.createElement('div');rdiv.className='rec-entry';
+    rdiv.innerHTML=`
+      <div class="rec-ep">E${E.epoch}</div>
+      <div class="rec-lbl" style="color:var(--recursion)">↻ Question node injected</div>
+      <div class="rec-token">${token}</div>
+      <div class="rec-detail">'${q.key_concepts[0]}' ↔ '${q.key_concepts[1]}'</div>
+    `;
+    rlog.insertBefore(rdiv,rlog.firstChild);
+    while(rlog.children.length>15)rlog.removeChild(rlog.lastChild);
+    pill('sRec',true,false,'↻ Growing');
+  }
+}
+
+function logEv(type,data){
+  const log=document.getElementById('evLog');
+  const em=log.querySelector('.empty');if(em)em.remove();
+  const div=document.createElement('div');div.className='ev-entry';
+  if(type==='f'){
+    div.innerHTML=`<div class="ev-ep">E${data.epoch}</div><div class="ev-lbl" style="color:var(--forbidden)">⚡ Spike +${data.spike.toFixed(4)}</div><div class="ev-detail">${JSON.stringify(E.forbidden_domains).slice(0,60)}</div>`;
+  }else if(type==='mq'){
+    div.innerHTML=`<div class="ev-ep">E${data.epoch}</div><div class="ev-lbl" style="color:var(--meta)">↻ Meta-question asked</div><div class="ev-detail">${(data.key_concepts||[]).join(' ↔ ')}</div>`;
+  }else{
+    div.innerHTML=`<div class="ev-ep">E${data.epoch}</div><div class="ev-lbl" style="color:var(--question)">◉ ${data.type} question</div><div class="ev-detail">${(data.domains||[]).join(' × ')}</div>`;
+  }
+  log.insertBefore(div,log.firstChild);
+  while(log.children.length>20)log.removeChild(log.lastChild);
+}
+
+function spark(){
+  const sk=document.getElementById('sk');const r=sk.parentElement.getBoundingClientRect();
+  sk.width=r.width;sk.height=r.height;const sc=sk.getContext('2d');sc.clearRect(0,0,sk.width,sk.height);
+  const data=E.hist;if(data.length<2)return;
+  const mn=Math.min(...data),mx=Math.max(...data)||1;
+  const W=sk.width,H=sk.height;
+  const tx=i=>(i/(data.length-1))*W,ty=v=>H-((v-mn)/(mx-mn||1))*H*.85-H*.07;
+  const g=sc.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(200,169,110,.35)');g.addColorStop(1,'rgba(200,169,110,0)');
+  sc.beginPath();sc.moveTo(tx(0),H);data.forEach((v,i)=>sc.lineTo(tx(i),ty(v)));
+  sc.lineTo(tx(data.length-1),H);sc.closePath();sc.fillStyle=g;sc.fill();
+  sc.beginPath();data.forEach((v,i)=>i===0?sc.moveTo(tx(i),ty(v)):sc.lineTo(tx(i),ty(v)));
+  sc.strokeStyle='rgba(200,169,110,.85)';sc.lineWidth=1.5;sc.stroke();
+}
+
+function toggleRun(){
+  E.running=!E.running;const btn=document.getElementById('btnRun');
+  if(E.running){btn.textContent='Pause';btn.className='btn s';E.interval=setInterval(runEpoch,E.speed);}
+  else{btn.textContent='Run Engine';btn.className='btn p';clearInterval(E.interval);}
+}
+
+function resetEngine(){
+  clearInterval(E.interval);E.running=false;
+  Object.assign(E,{epoch:0,nodes:[],edges:[],motifs:{},compression:1,semC:1,mm:0,entropy:0,lastC:1,
+    hist:[],fCount:0,hCount:0,qCount:0,mqCount:0,recCount:0,
+    forbidden_domains:{},convState:'Exploring',boostedNodes:new Set()});
+  E.askedHoles=new Set();
+  document.getElementById('btnRun').textContent='Run Engine';
+  document.getElementById('btnRun').className='btn p';
+  document.getElementById('eNum').textContent='0';
+  document.getElementById('qLog').innerHTML='<div class="empty">Listening for holes precise enough to name...</div>';
+  document.getElementById('recLog').innerHTML='<div class="empty">Question nodes appear here when generated...</div>';
+  document.getElementById('evLog').innerHTML='<div class="empty">Watching...</div>';
+  document.getElementById('sg').classList.remove('on');
+  updateConvBadge('Exploring');
+  pill('sEv',false,false,'Watching');pill('sQ',false,false,'◉ Listening');
+  pill('sRec',false,false,'↻ Recursion');
+  updateMetrics();spark();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();toggleRun();}
+  if(e.code==='KeyR')resetEngine();
+});
+</script>
+</body>
+</html>
