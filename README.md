@@ -325,7 +325,7 @@ This loop is closed. It feeds itself. Each pass leaves it more constrained than 
 | Pressure Engine | `pressure_engine.py` | WL-1 isomorphism-invariant motif signatures, compression, entropy, semantic pressure, frontier sampling |
 | Governance | `governance.py` | Domain-aware compression spike detection, forbidden motif recording with domain context |
 | Hole Detector | `hole_detector.py` | Identifies holes with sufficient structural precision to be named |
-| Hole Monitor | `hole_monitor.py` | Tracks hole age and ripeness, coordinates with questioner and settler |
+| Hole Monitor | `hole_monitor.py` | Retired — hole aging/registry logic retained for reference; active hole coordination handled by driver + hole_detector |
 | Questioner | `questioner.py` | Composes questions from structural profiles, applies pressure boosts to hole endpoints |
 | Settler | `settler.py` | Laplacian energy minimization, full vocabulary search, hold coordination with questioner |
 | Recursion | `recursion.py` | Question node injection, question-question edge linking, meta-hole detection |
@@ -340,7 +340,7 @@ This loop is closed. It feeds itself. Each pass leaves it more constrained than 
 | Structural Models | `core_structural/` | Constraint, graph, incentive, and system models |
 | Pressure Metric | `core_engine/pressure_metric.py` | Per-node pressure computation |
 | Entropy | `core_engine/entropy.py` | Structural entropy from degree distribution |
-| Stability | `core_engine/stability.py` | Stability classification from pressure and hole signals |
+| Stability | `core_engine/stability.py` | Thin wrapper over root-level convergence states |
 | Adaptive Pressure | `core_engine/adaptive_pressure.py` | Edge weight adaptation from pressure feedback |
 | Governance Metrics | `core_engine/governance_metrics.py` | Governance node influence via betweenness centrality |
 | Invariants | `core_engine/invariants.py` | Graph invariant checking — orphan detection |
@@ -352,6 +352,7 @@ This loop is closed. It feeds itself. Each pass leaves it more constrained than 
 | Tool | File | Output |
 |------|------|--------|
 | Live Dashboard | `dashboard.html` | Full graph visualization, compression trends, question log, recursion layer — no server required |
+| AI-Augmented Dashboard | `ai_augmentation.jsx` | React component — live engine with Claude API integration for hole settling suggestions |
 | Convergence Plot | `viz/convergence_plot.py` | Pressure convergence over time |
 | Pressure Heatmap | `viz/pressure_heatmap.py` | Per-node pressure distribution |
 | Graph Export | `viz/export_graph.py` | Graphviz `.dot` export |
@@ -405,8 +406,8 @@ The-Great-Discovery/
 ├── core_engine/
 │   ├── pressure_metric.py       ← per-node pressure from restrictive/enabling edges
 │   ├── entropy.py               ← structural entropy from degree distribution
-│   ├── convergence.py           ← windowed derivative test, stability classification
-│   ├── stability.py             ← classify(delta_pressure, hole_delta) → state
+│   ├── convergence.py           ← re-exports from root convergence.py
+│   ├── stability.py             ← thin wrapper; full impl in root convergence.py
 │   ├── hole_metrics.py          ← hole_density = unresolved / expected
 │   ├── adaptive_pressure.py     ← edge weight adaptation from pressure feedback
 │   ├── governance_metrics.py    ← betweenness centrality for governance nodes
@@ -433,6 +434,7 @@ The-Great-Discovery/
 │   ├── FOUNDATION.md
 │   ├── GLOSSARY.md
 │   ├── MANIFESTO.md
+│   ├── MATH_REFERENCE.docx
 │   └── ROADMAP.md
 │
 ├── demos/
@@ -444,13 +446,14 @@ The-Great-Discovery/
 ├── pressure_engine.py           ← WL-1 signatures, compression, entropy, frontier sampling
 ├── governance.py                ← domain-aware forbidden motif detection
 ├── hole_detector.py             ← nameable hole identification
-├── hole_monitor.py              ← hole aging, ripeness, questioning coordination
+├── hole_monitor.py              ← retired — hole aging logic retained for reference
 ├── questioner.py                ← question composition, pressure boost feedback
 ├── settler.py                   ← Laplacian energy minimization, hold coordination
 ├── recursion.py                 ← question nodes, meta-holes, depth limit
 ├── semantics.py                 ← concept vocabulary, relation types, distances
-├── convergence.py               ← ConvergenceDetector, stability states
+├── convergence.py               ← ConvergenceDetector, stability states (full impl)
 ├── dashboard.html               ← live visualization, no server required
+├── ai_augmentation.jsx          ← AI-augmented React dashboard (Phase 4.5)
 ├── stress_test.py
 └── requirements.txt
 ```
@@ -503,6 +506,12 @@ Open `dashboard.html` in any browser.
 
 No server. No installation. The entire engine runs in JavaScript — same structural dynamics, same motif sampling, same convergence detection, same question generation, same recursion layer. Watch it run. The graph is real. The pressure is real. The questions are real.
 
+### AI-Augmented Dashboard
+
+Open `ai_augmentation.jsx` as a React artifact or via a local React environment.
+
+Phase 4.5: Claude reads the structural profile of each detected hole and suggests the concept the topology demands. Suggestions are injected as real graph nodes. The engine and the model sharpen each other.
+
 ---
 
 ## Example Output
@@ -546,7 +555,7 @@ No server. No installation. The entire engine runs in JavaScript — same struct
 The engine exists and runs. The loop is closed. The dynamics are real.
 
 - Closed-loop constraint accumulation
-- WL-1 isomorphism-invariant motif signatures  
+- WL-1 isomorphism-invariant motif signatures
 - Frontier sampling (W=30 nodes, O(W³/6) per epoch)
 - Shannon entropy measurement
 - Compression spike governance
@@ -555,41 +564,49 @@ The engine exists and runs. The loop is closed. The dynamics are real.
 - Convergence detector with stability classification and oscillation period detection
 - Live visualization dashboard
 
-### Phase 1 — Structural Integrity 🔧 In Progress
+### Phase 1 — Structural Integrity ✅ Complete
 
-Hardening the foundation before adding meaning.
+Foundation hardened. All structural dynamics validated and wired together.
 
-- Scalable importance-weighted motif sampling
-- Stronger isomorphism guarantees (WL-2 extension)
-- Governance threshold calibration against real graph behavior
-- Exploration bias fully wired to hole pressure field
+- WL-1 isomorphism-invariant signatures — complete and proven correct for k ≤ 4
+- Frontier sampling W=30 — O(W³/6) per epoch regardless of graph size
+- Three-force pressure field — hole attraction, forbidden repulsion, void tension all active
+- Hole attraction parsing — all `shape_sig` formats from all writers handled correctly
+- Governance epoch tracking — `epoch_found` recorded correctly on forbidden motifs
+- Convergence detector wired into driver — STABLE, DEADLOCKED, DIVERGENT, OSCILLATORY states live
+- Question feedback loop — pressure boosts applied, hold coordination with settler active
+- Dead code identified and retired — `hole_monitor.py` documented and stepped aside
 
-### Phase 2 — Semantic Layer 📋 Planned
+### Phase 2 — Semantic Layer ✅ Complete
 
-Introducing meaning without forcing it.
+Meaning introduced without forcing it.
 
-- Fully typed nodes with meaning anchors
-- Fully typed edges with relationship semantics
-- Semantic pressure tracking (structural/semantic mismatch as governance signal)
-- Energy-based hole resolution over the full semantic space
+- Fully typed nodes with meaning anchors (concept vocabulary across 6 domains)
+- Fully typed edges with relationship semantics (10 relation types, weighted)
+- Semantic pressure tracking — structural/semantic mismatch as governance signal
+- Energy-based hole resolution over full 84-concept vocabulary
+- Domain-aware forbidden motif context
 
-### Phase 3 — Named Holes 📋 Planned
+### Phase 3 — Named Holes ✅ Complete
 
-The engine begins to ask questions.
+The engine asks questions.
 
-When a hole's shape becomes precise enough — when the surrounding constraints have narrowed it to the point where only a very specific kind of thing can fill it — the engine surfaces that hole in language. Not as an answer. As a question. A structural demand, translated.
+- Hole detector with precision threshold and domain tension requirements
+- Question composition (bridge, depth, boundary types)
+- Natural language question output from structural profiles
+- Pressure boost feedback — questions reshape subsequent exploration
+- Question nodes injected into topology (recursion layer seeded)
 
-*This phase is complete when the engine produces a named hole nobody asked it to find, in a domain nobody told it to explore, that turns out to be real.*
-
-### Phase 4 — Recursive Discovery 📋 Seeded
+### Phase 4 — Recursive Discovery 🔄 Active
 
 The mapmaker becomes the map.
 
-Question nodes have been injected into the topology. The recursion layer is running. Meta-holes are being detected. The engine is beginning to map its own discovery process.
+- Question nodes participate in motif sampling and hole detection
+- Question-question edges (analogous_to, causes) create meta-topology
+- Meta-hole detection over question layer
+- AI augmentation layer (Phase 4.5): Claude reads hole profiles, suggests settling concepts, injects them as real nodes (`ai_augmentation.jsx`)
 
-This phase has no completion condition.
-
-It is the engine doing what it was always going to do, given enough time and a sealed enough system.
+This phase has no completion condition. It is the engine doing what it was always going to do.
 
 ---
 

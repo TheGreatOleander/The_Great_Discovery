@@ -1,5 +1,5 @@
 """
-recursion.py — Phase 4 seed
+recursion.py — Phase 4 (fully wired)
 The Great Discovery
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -18,54 +18,18 @@ The act of discovery becomes part of the topology being discovered.
 The map sharpens the mapmaker. The mapmaker sharpens the map.
 
 ─────────────────────────────────────────────────────────────────────────────
-MECHANICS
+CHANGES FROM SEED VERSION
 ─────────────────────────────────────────────────────────────────────────────
 
-1. QUESTION NODES
-   When the engine generates a question Q about hole H(src, dst):
-       - Inject a new node into the graph: concept = question_token(Q),
-         domain = 'recursion'
-       - Connect it to src and dst with relation_type = 'emerges_from'
-       - Connect it to the bridge node (if known) with 'requires'
+run_recursion_step() now accepts a `depth` parameter.
 
-   These are real graph nodes. They participate in motif sampling, pressure
-   computation, and hole detection. The recursion layer is not a separate
-   data structure — it is part of the same topology.
+    depth=0 : object-level questions (about the domain graph)
+    depth=1 : meta-questions (about questions)
+    depth=2 : meta-meta-questions (theoretical ceiling, rarely reached)
 
-2. QUESTION-QUESTION EDGES
-   After injecting a question node Q_new, scan existing question nodes
-   Q_1..Q_n. If Q_new and Q_i share:
-       - A domain boundary (same pair of domains)
-       - A relation type in their profiles
-   then connect them with 'analogous_to' (structural mirror relationship).
-
-   These cross-question edges create a meta-topology over the question log.
-   When the motif engine samples subgraphs containing question nodes, it
-   begins to detect patterns in how the engine asks questions — which is
-   Phase 4.
-
-3. META-HOLES
-   When two question nodes are connected but a third structurally-implied
-   question node is missing (transitive closure in the question layer),
-   that is a meta-hole: a question that the structure of asking questions
-   implies but has not yet been asked.
-
-   Meta-holes surface through the ordinary hole detection machinery —
-   they are holes in the 'recursion' domain. The questioner will ask about
-   them on the next cycle. These are the questions the mapmaker hasn't
-   thought to ask yet, about the process of not yet having thought to ask.
-
-4. RECURSION DEPTH LIMIT
-   To prevent infinite regress, question nodes have a depth field:
-       depth = 0 for object-level questions (about the domain graph)
-       depth = 1 for meta-questions (about questions)
-       depth = 2 for meta-meta-questions
-   Maximum depth: MAX_RECURSION_DEPTH = 2
-
-   This is not a philosophical limit. It is a practical one: at depth > 2,
-   the meta-topology has not accumulated enough constraints to produce
-   precise questions. The engine will raise this limit naturally as it
-   matures.
+The driver passes depth=0 for regular questions and depth=1 for
+meta-questions. inject_question_node() already supported this; it was
+just never threaded through from the call site.
 
 ─────────────────────────────────────────────────────────────────────────────
 QUESTION TOKEN
@@ -78,10 +42,10 @@ Examples:
     "bridge:physics:mathematics:emerges_from"
     "depth:cognition:cognition:requires"
     "boundary:systems:information:constrains"
+    "meta:recursion:recursion:analogous_to"       ← depth=1 nodes
 
 This makes question nodes semantically legible to the motif engine.
-Two question nodes with the same token are structurally equivalent questions
-— they appear in the same position in their respective topologies.
+Two question nodes with the same token are structurally equivalent questions.
 When they cluster in motifs, that is the engine recognizing that it keeps
 asking the same shape of question. That is signal.
 
@@ -123,7 +87,10 @@ def inject_question_node(conn, epoch, q_record, depth=0):
     Creates a node with:
         concept  = question_token(q_record)
         domain   = 'recursion'
-        depth    = recursion depth (0 = object-level)
+        depth    = recursion depth
+                   0 = object-level question (about the domain graph)
+                   1 = meta-question (about questions)
+                   2 = meta-meta-question
 
     Connects it to:
         src node → new node  via 'emerges_from'  (question emerges from src)
@@ -147,14 +114,12 @@ def inject_question_node(conn, epoch, q_record, depth=0):
     src_id  = q_record.get('src_id')
     dst_id  = q_record.get('dst_id')
 
-    # Insert question node
     c.execute(
         "INSERT INTO nodes (concept, domain, introduced, depth) VALUES (?, ?, ?, ?)",
         (token, RECURSION_DOMAIN, epoch, depth)
     )
     q_node_id = c.lastrowid
 
-    # Connect to the hole's endpoints
     if src_id is not None:
         c.execute(
             "INSERT INTO edges VALUES (?, ?, ?, ?)",
@@ -224,8 +189,7 @@ def link_question_nodes(conn, new_q_node_id, new_q_record):
                 )
                 edge_set.add((new_q_node_id, existing_id))
 
-        # Directional chain: new question's dst_domain feeds into existing question's src_domain
-        # new: A→B  existing: B→C  ⟹  new → existing (causes)
+        # Directional chain: new → existing (A→B, B→C pattern)
         if new_dst_dom == ex_src_dom and new_q_node_id != existing_id:
             if (new_q_node_id, existing_id) not in edge_set:
                 c.execute(
@@ -235,8 +199,7 @@ def link_question_nodes(conn, new_q_node_id, new_q_record):
                 )
                 edge_set.add((new_q_node_id, existing_id))
 
-        # Reverse chain: existing question's dst_domain feeds into new question's src_domain
-        # existing: A→B  new: B→C  ⟹  existing → new (causes)
+        # Reverse chain: existing → new (A→B, B→C pattern)
         if ex_dst_dom == new_src_dom and existing_id != new_q_node_id:
             if (existing_id, new_q_node_id) not in edge_set:
                 c.execute(
@@ -262,9 +225,6 @@ def find_meta_holes(conn):
         - No edge exists A → C
         - A, B, C are all in the 'recursion' domain
 
-    These are the questions that the pattern of asking questions implies
-    but hasn't yet asked.
-
     Returns list of (src_q_id, dst_q_id) meta-hole positions.
     """
     c = conn.cursor()
@@ -279,7 +239,6 @@ def find_meta_holes(conn):
     all_edges = c.fetchall()
     edge_set  = set(all_edges)
 
-    # Only edges between question nodes
     q_edges = [(a, b) for (a, b) in all_edges
                if a in q_node_ids and b in q_node_ids]
 
@@ -299,22 +258,24 @@ def find_meta_holes(conn):
 
 # ── Main recursion step ───────────────────────────────────────────────────────
 
-def run_recursion_step(conn, epoch, questions):
+def run_recursion_step(conn, epoch, questions, depth=0):
     """
     Execute one recursion step for all questions generated this epoch.
 
     For each question:
-        1. Inject as a graph node (depth=0 for object-level questions)
+        1. Inject as a graph node at the specified depth
         2. Link to structurally similar question nodes
-        3. Return meta-holes for the driver to report
-
-    The driver passes the returned meta-holes to the questioner on the
-    next cycle if they meet the precision threshold. This is Phase 4.
+        3. Return meta-holes for the driver to act on
 
     Args:
         conn      : SQLite connection
         epoch     : int — current epoch
         questions : list of question records from generate_questions()
+                    or generate_meta_questions()
+        depth     : int — recursion depth
+                    0 = object-level questions (default)
+                    1 = meta-questions
+                    2 = meta-meta-questions (ceiling)
 
     Returns:
         meta_holes : list of (src_q_id, dst_q_id) — implied meta-questions
@@ -323,7 +284,7 @@ def run_recursion_step(conn, epoch, questions):
     q_node_ids = []
 
     for q in questions:
-        q_node_id = inject_question_node(conn, epoch, q, depth=0)
+        q_node_id = inject_question_node(conn, epoch, q, depth=depth)
         if q_node_id is not None:
             link_question_nodes(conn, q_node_id, q)
             q['q_node_id'] = q_node_id

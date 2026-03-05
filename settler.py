@@ -1,151 +1,128 @@
 """
-settler.py — Phase 3 hardened v2
+settler.py — Phase 4 (hardened)
 The Great Discovery
 
 ═══════════════════════════════════════════════════════════════════════════════
-SETTLER / QUESTIONER COORDINATION
+LAPLACIAN ENERGY MINIMIZATION FOR HOLE SETTLING
 ═══════════════════════════════════════════════════════════════════════════════
 
-THE PROBLEM:
-    When a question is asked about a hole H(src, dst), a pressure boost is
-    applied to src and dst. The boost signals: "this hole is still gathering
-    constraints — don't settle it yet." But settle_holes() was filling holes
-    indiscriminately, including ones actively being questioned.
+A hole is filled by finding the concept c* that minimizes:
 
-    A questioned hole filled too early produces a low-confidence settlement.
-    The whole point of the boost is to let the topology accumulate more
-    constraint around the hole before the settler commits. Filling it early
-    throws that away.
+    E_total(c) = E_normalized(c) + E_forbidden(c)
 
-THE FIX — HOLD OPEN QUESTIONED HOLES:
-    Before settling any hole at (a, d), check whether either endpoint has
-    an active pressure boost above HOLD_THRESHOLD. If so, skip it this epoch.
+where:
+
+    E_normalized(c) = (1/|N|) · Σ_{v ∈ N} w(rel_type) · d(c, v)²
+
+        w(rel_type)  = structural weight of the dominant relation type
+                       (from RELATION_WEIGHTS in semantics.py)
+        d(c, v)      = deterministic semantic distance between concept c
+                       and the concept of node v
+
+    E_forbidden(c) = λ · I(forbidden_sigs non-empty) · homogeneity(c, N)
+
+        homogeneity(c, N) = count(n ∈ N where n.domain == c.domain) / |N|
+        λ = 0.35 (forbidden penalty weight)
+
+The concept c* with minimum total energy settles into the hole.
+
+─────────────────────────────────────────────────────────────────────────────
+RECURSION DOMAIN HANDLING
+─────────────────────────────────────────────────────────────────────────────
+
+Nodes with domain='recursion' carry question tokens as their concept
+(e.g. "bridge:physics:mathematics:emerges_from"). These are not in the
+84-concept vocabulary and cannot be directly compared using the standard
+semantic distance function.
+
+For settling purposes, recursion-domain nodes are treated as having
+domain index RECURSION_DOMAIN_INDEX = 3 (cognition). This is intentional:
+
+    - Cognition sits at the centre of the domain index ordering
+      (physics=0, mathematics=1, biology=2, cognition=3, systems=4, information=5)
+    - Meta-awareness, self-reference, and pattern recognition — the semantic
+      territory of question nodes — align most naturally with cognition
+    - Placing recursion at the centre minimises the maximum distance penalty
+      from any domain, giving question nodes moderate pull from all directions
+      rather than strong pull from one and weak pull from others
+
+This is documented here so it is a choice, not an accident.
+
+─────────────────────────────────────────────────────────────────────────────
+HOLD COORDINATION WITH QUESTIONER
+─────────────────────────────────────────────────────────────────────────────
+
+When a hole has recently been questioned, its endpoint nodes receive a
+pressure boost from questioner._apply_pressure_boost(). The settler
+checks this boost before filling:
+
+    If boost(src) > HOLD_THRESHOLD or boost(dst) > HOLD_THRESHOLD:
+        skip this epoch — still being questioned
+
+This prevents the settler from prematurely filling holes that the
+questioner is still circling. The hold releases naturally as boost
+decays at 0.15/epoch.
 
     HOLD_THRESHOLD = 0.3
-
-    Justification: a fresh question produces boost = precision × 1.2 ≈ 0.9.
-    After ~4 epochs of decay (4 × 0.15 = 0.6), boost ≈ 0.3. At that point
-    the engine has had time to explore the region and accumulate constraints.
-    Below HOLD_THRESHOLD, the hold releases and the settler fills the hole
-    with a better-informed energy minimum.
-
-    This means: the quality of settlement improves with question age.
-    The longer a question has been open (up to the hold threshold), the more
-    constrained the hole becomes, and the lower the settling energy of the
-    winning concept.
-
-URGENCY FORMULA (unchanged from v1):
-    urgency(a, d) = 1/(1 + deg(a)·0.2) + 1/(1 + deg(d)·0.2)
-
-    Low-degree nodes are more urgent — structurally isolated, filling their
-    hole has larger normalizing effect on the pressure field.
-
-FULL-VOCABULARY ENERGY MINIMIZATION (unchanged from v1):
-    Score all 84 vocabulary concepts exhaustively.
-    c* = argmin E_total(c) = E_laplacian(c) + E_forbidden(c)
-    See v1 docstring §6 for full derivation.
+    Boost decay rate = 0.15/epoch
+    Hold duration ≈ 2 epochs after question is generated
 
 ═══════════════════════════════════════════════════════════════════════════════
 """
 
-import math
-import random
-from collections import Counter
-from semantics import (
-    ALL_CONCEPTS, sample_relation, relation_weight,
-    semantic_distance, describe_hole_demand, RELATION_WEIGHTS
-)
-
-HOLD_THRESHOLD = 0.3   # Boost level above which a hole is held open
+from semantics import RELATION_WEIGHTS, CONCEPT_VOCABULARY, DOMAIN_INDEX
 
 
-# ─── Energy computation (unchanged) ──────────────────────────────────────────
+# ── Constants ─────────────────────────────────────────────────────────────────
+FORBIDDEN_PENALTY_WEIGHT = 0.35
+HOLD_THRESHOLD           = 0.3
 
-def _domain_embedding(domain):
-    DOMAIN_ORDER = {
-        'physics': 0, 'mathematics': 1, 'biology': 2,
-        'cognition': 3, 'systems': 4, 'information': 5
-    }
-    return DOMAIN_ORDER.get(domain, 3)
+# Domain index assigned to recursion-domain nodes in semantic distance.
+# Intentionally set to cognition (3) — see module docstring.
+RECURSION_DOMAIN_INDEX   = 3
 
 
-def _semantic_distance_fast(concept_a, domain_a, concept_b, domain_b):
+# ── Semantic distance ─────────────────────────────────────────────────────────
+
+def _domain_index(domain):
     """
-    Deterministic semantic distance for stable energy minimization.
-        d = 0.0                     if same concept
-        d = 0.2                     if same domain
-        d = 0.4 + |Δidx| / 5       if cross-domain
+    Return the integer domain index for distance calculations.
+
+    Known domains use their position in DOMAIN_INDEX.
+    The 'recursion' domain is explicitly mapped to RECURSION_DOMAIN_INDEX (3).
+    Any other unknown domain defaults to 3 (centre position).
+    """
+    if domain == 'recursion':
+        return RECURSION_DOMAIN_INDEX
+    return DOMAIN_INDEX.get(domain, 3)
+
+
+def _semantic_distance(concept_a, domain_a, concept_b, domain_b):
+    """
+    Deterministic semantic distance between two concepts.
+
+    d(a, b) = 0.0                          if concept_a == concept_b
+    d(a, b) = 0.2                          if domain_a  == domain_b
+    d(a, b) = 0.4 + |idx_a - idx_b| / 5   otherwise
+
+    Domain index difference normalised over 5 (max possible), keeping d ∈ [0, 1].
     """
     if concept_a == concept_b:
         return 0.0
     if domain_a == domain_b:
         return 0.2
-    da = _domain_embedding(domain_a)
-    db = _domain_embedding(domain_b)
-    return 0.4 + abs(da - db) / 5.0
+    idx_a = _domain_index(domain_a)
+    idx_b = _domain_index(domain_b)
+    return 0.4 + abs(idx_a - idx_b) / 5.0
 
 
-def _laplacian_energy(concept, domain, surrounding_nodes, surrounding_relations):
-    """
-    E(c) = (1/|N|) Σ_{v∈N} w(rel) · d(c,v)²
-
-    Laplacian quadratic form normalized by neighborhood size.
-    """
-    if not surrounding_nodes:
-        return 0.5
-    rel_counts   = Counter(surrounding_relations)
-    dominant_rel = rel_counts.most_common(1)[0][0] if rel_counts else 'related'
-    w            = RELATION_WEIGHTS.get(dominant_rel, 0.5)
-    energy = sum(w * (_semantic_distance_fast(concept, domain,
-                                               n['concept'], n['domain']) ** 2)
-                 for n in surrounding_nodes)
-    return energy / len(surrounding_nodes)
-
-
-def _forbidden_penalty(domain, surrounding_nodes, forbidden_sigs, lambda_=0.35):
-    """
-    penalty = λ · I(forbidden non-empty) · domain_homogeneity
-    """
-    if not forbidden_sigs or not surrounding_nodes:
-        return 0.0
-    domain_list = [n['domain'] for n in surrounding_nodes]
-    homogeneity = sum(1 for d in domain_list if d == domain) / len(domain_list)
-    return lambda_ * homogeneity
-
-
-def settling_energy(concept, domain, surrounding_nodes, surrounding_relations, forbidden_sigs):
-    """
-    E_total(c) = E_laplacian(c) + E_forbidden(c)
-    Lower = better fit.
-    """
-    return (_laplacian_energy(concept, domain, surrounding_nodes, surrounding_relations)
-            + _forbidden_penalty(domain, surrounding_nodes, forbidden_sigs))
-
-
-def find_settling_concept(surrounding_nodes, surrounding_relations, forbidden_sigs):
-    """
-    Exhaustive search over all 84 vocabulary concepts.
-    Returns (concept, domain, energy) with minimum total energy.
-    """
-    if not ALL_CONCEPTS:
-        return 'unknown', 'unassigned', 1.0
-    best_concept, best_domain, best_energy = None, None, math.inf
-    for concept, domain in ALL_CONCEPTS:
-        e = settling_energy(concept, domain, surrounding_nodes,
-                            surrounding_relations, forbidden_sigs)
-        if e < best_energy:
-            best_energy  = e
-            best_concept = concept
-            best_domain  = domain
-    return best_concept, best_domain, best_energy
-
-
-# ─── Pressure boost query ─────────────────────────────────────────────────────
+# ── Hold coordination ─────────────────────────────────────────────────────────
 
 def _get_boost(conn, node_id):
     """
-    Return the current pressure_boost for a node, or 0.0 if column
-    doesn't exist yet or node has no boost.
+    Return the current pressure boost on a node.
+    Returns 0.0 if the pressure_boost column doesn't exist yet
+    (questioner hasn't run) or if the node has no boost.
     """
     c = conn.cursor()
     try:
@@ -158,181 +135,231 @@ def _get_boost(conn, node_id):
 
 def _is_held(conn, src_id, dst_id):
     """
-    Return True if either endpoint of hole (src, dst) has a pressure boost
-    above HOLD_THRESHOLD — meaning the hole is still being questioned and
-    should not be settled yet.
+    Return True if either endpoint of a hole is currently held by the questioner.
     """
     return (_get_boost(conn, src_id) > HOLD_THRESHOLD or
             _get_boost(conn, dst_id) > HOLD_THRESHOLD)
 
 
-# ─── Neighborhood gathering ───────────────────────────────────────────────────
+# ── Energy computation ────────────────────────────────────────────────────────
 
-def _gather_neighborhood(conn, src_id, dst_id, edge_set, node_data):
+def _dominant_relation(conn, src_id, dst_id):
+    """Return the most common relation type in the local neighborhood."""
     c = conn.cursor()
-    neighborhood_ids = set()
-    for (a, b) in edge_set:
-        if a in (src_id, dst_id) or b in (src_id, dst_id):
-            neighborhood_ids.add(a)
-            neighborhood_ids.add(b)
-    neighborhood_ids -= {src_id, dst_id}
-    surrounding_nodes = [node_data[n] for n in neighborhood_ids if n in node_data]
-    if neighborhood_ids:
-        placeholders = ','.join('?' * len(neighborhood_ids))
-        ids = list(neighborhood_ids)
-        c.execute(
-            f"SELECT relation_type FROM edges WHERE src IN ({placeholders}) OR dst IN ({placeholders})",
-            ids + ids
+    c.execute("""
+        SELECT relation_type, COUNT(*) as cnt
+        FROM edges
+        WHERE src IN (?, ?) OR dst IN (?, ?)
+        GROUP BY relation_type
+        ORDER BY cnt DESC
+        LIMIT 1
+    """, (src_id, dst_id, src_id, dst_id))
+    row = c.fetchone()
+    return row[0] if row else 'related'
+
+
+def _neighborhood(conn, src_id, dst_id):
+    """
+    Return list of (node_id, concept, domain) for all nodes in the
+    local neighborhood of the hole (src, dst).
+    """
+    c = conn.cursor()
+    c.execute("""
+        SELECT DISTINCT n.id, n.concept, n.domain
+        FROM nodes n
+        JOIN edges e ON e.src = n.id OR e.dst = n.id
+        WHERE (e.src IN (?, ?) OR e.dst IN (?, ?))
+          AND n.id NOT IN (?, ?)
+    """, (src_id, dst_id, src_id, dst_id, src_id, dst_id))
+    return c.fetchall()
+
+
+def _settling_energy(candidate_concept, candidate_domain,
+                     neighborhood, rel_weight, forbidden_sigs):
+    """
+    Compute E_total(c) for a candidate concept.
+
+    Args:
+        candidate_concept : str
+        candidate_domain  : str
+        neighborhood      : list of (node_id, concept, domain)
+        rel_weight        : float — weight of dominant relation type
+        forbidden_sigs    : set   — current forbidden motif signatures
+
+    Returns:
+        float : E_total
+    """
+    if not neighborhood:
+        return 0.0
+
+    # Laplacian energy component
+    energy = sum(
+        rel_weight * _semantic_distance(
+            candidate_concept, candidate_domain,
+            nbr_concept, nbr_domain
+        ) ** 2
+        for (_, nbr_concept, nbr_domain) in neighborhood
+    )
+    e_normalized = energy / len(neighborhood)
+
+    # Forbidden penalty component
+    if forbidden_sigs:
+        same_domain_count = sum(
+            1 for (_, _, nbr_domain) in neighborhood
+            if nbr_domain == candidate_domain
         )
-        surrounding_relations = [row[0] for row in c.fetchall()]
+        homogeneity = same_domain_count / len(neighborhood)
+        e_forbidden = FORBIDDEN_PENALTY_WEIGHT * homogeneity
     else:
-        surrounding_relations = []
-    return surrounding_nodes, surrounding_relations
+        e_forbidden = 0.0
+
+    return e_normalized + e_forbidden
 
 
-# ─── Main settling pass ───────────────────────────────────────────────────────
+# ── Urgency ───────────────────────────────────────────────────────────────────
+
+def _urgency(conn, src_id, dst_id):
+    """
+    Urgency score for filling a hole — higher for low-degree nodes.
+
+        urgency(a, d) = 1/(1 + deg(a)·0.2) + 1/(1 + deg(d)·0.2)
+
+    Low-degree nodes are structurally more isolated and their holes
+    are more likely to be genuine structural demands.
+    """
+    c = conn.cursor()
+    c.execute("""
+        SELECT COUNT(*) FROM (
+            SELECT src AS node_id FROM edges WHERE src = ?
+            UNION ALL
+            SELECT dst AS node_id FROM edges WHERE dst = ?
+        )
+    """, (src_id, src_id))
+    deg_src = c.fetchone()[0]
+
+    c.execute("""
+        SELECT COUNT(*) FROM (
+            SELECT src AS node_id FROM edges WHERE src = ?
+            UNION ALL
+            SELECT dst AS node_id FROM edges WHERE dst = ?
+        )
+    """, (dst_id, dst_id))
+    deg_dst = c.fetchone()[0]
+
+    return 1.0 / (1.0 + deg_src * 0.2) + 1.0 / (1.0 + deg_dst * 0.2)
+
+
+# ── Concept finding ───────────────────────────────────────────────────────────
+
+def find_settling_concept(conn, src_id, dst_id):
+    """
+    Find the concept that minimizes settling energy for hole (src, dst).
+
+    Exhaustively scores all 84 vocabulary concepts and returns the
+    minimum-energy candidate.
+
+    Returns:
+        (concept, domain, energy) or (None, None, None) if no neighborhood
+    """
+    neighborhood = _neighborhood(conn, src_id, dst_id)
+    if not neighborhood:
+        return None, None, None
+
+    rel_type   = _dominant_relation(conn, src_id, dst_id)
+    rel_weight = RELATION_WEIGHTS.get(rel_type, 0.7)
+
+    c = conn.cursor()
+    c.execute("SELECT signature FROM forbidden")
+    forbidden_sigs = set(row[0] for row in c.fetchall())
+
+    best_concept = None
+    best_domain  = None
+    best_energy  = float('inf')
+
+    for (concept, domain) in CONCEPT_VOCABULARY:
+        e = _settling_energy(concept, domain,
+                             neighborhood, rel_weight, forbidden_sigs)
+        if e < best_energy:
+            best_energy  = e
+            best_concept = concept
+            best_domain  = domain
+
+    return best_concept, best_domain, best_energy
+
+
+# ── Main settling entry point ─────────────────────────────────────────────────
 
 def settle_holes(conn, epoch, limit=3):
     """
-    Find highest-urgency holes and settle minimum-energy concepts into them.
+    Fill up to `limit` open holes per epoch.
 
-    Holes with active pressure boosts above HOLD_THRESHOLD are skipped —
-    they are still being questioned and need more time to accumulate constraints.
+    Selection order: highest urgency first (lowest-degree endpoints).
+    Holes currently held by the questioner (pressure_boost > HOLD_THRESHOLD)
+    are skipped.
 
-    Returns list of settled hole records.
+    For each selected hole:
+        1. Find minimum-energy settling concept
+        2. Insert concept as a new node
+        3. Add edges (src → new, new → dst)
+        4. Mark hole as filled in the holes table
+
+    Args:
+        conn  : SQLite connection
+        epoch : int — current epoch
+        limit : int — maximum holes to fill (default 3,
+                      reduced to 1 when EXPANDING,
+                      0 when mismatch ≥ HALT_THRESHOLD)
     """
     c = conn.cursor()
-    c.execute("SELECT src, dst FROM edges")
-    raw_edges = c.fetchall()
-    edge_set  = set(raw_edges)
-    if not raw_edges:
-        return []
 
-    c.execute("SELECT id, concept, domain FROM nodes")
-    node_data = {row[0]: {'concept': row[1], 'domain': row[2]} for row in c.fetchall()}
+    c.execute("""
+        SELECT src_id, dst_id FROM holes
+        WHERE filled = 0
+        ORDER BY rowid ASC
+    """)
+    open_holes = c.fetchall()
 
-    c.execute("SELECT signature FROM forbidden")
-    forbidden_sigs = set(row[0] for row in c.fetchall())
+    if not open_holes:
+        return
 
-    degree = {}
-    for (a, b) in raw_edges:
-        degree[a] = degree.get(a, 0) + 1
-        degree[b] = degree.get(b, 0) + 1
+    # Sort by urgency, skip held holes
+    candidates = []
+    for (src_id, dst_id) in open_holes:
+        if _is_held(conn, src_id, dst_id):
+            continue
+        urgency = _urgency(conn, src_id, dst_id)
+        candidates.append((urgency, src_id, dst_id))
 
-    # Collect transitive hole candidates with urgency scores
-    hole_candidates = []
-    for (a, b) in raw_edges:
-        for (b2, d) in raw_edges:
-            if b == b2 and (a, d) not in edge_set and a != d:
-                urgency = (1.0 / (1.0 + degree.get(a, 0) * 0.2) +
-                           1.0 / (1.0 + degree.get(d, 0) * 0.2))
-                hole_candidates.append((urgency, a, b, d))
+    candidates.sort(reverse=True)
 
-    if not hole_candidates:
-        return []
-
-    hole_candidates.sort(key=lambda x: x[0], reverse=True)
-    to_settle = hole_candidates[:limit * 2]
-    random.shuffle(to_settle)
-
-    settled  = []
-    inserted = 0
-
-    for urgency, a, bridge, d in to_settle:
-        if inserted >= limit:
+    settled = 0
+    for (urgency, src_id, dst_id) in candidates:
+        if settled >= limit:
             break
-        if (a, d) in edge_set:
+
+        concept, domain, energy = find_settling_concept(conn, src_id, dst_id)
+        if concept is None:
             continue
 
-        # ── COORDINATION: skip held holes ─────────────────────────────────────
-        if _is_held(conn, a, d):
-            continue   # Still being questioned — let boost decay first
-
-        surrounding_nodes, surrounding_relations = _gather_neighborhood(
-            conn, a, d, edge_set, node_data
+        # Insert settled node
+        c.execute(
+            "INSERT INTO nodes (concept, domain, introduced) VALUES (?, ?, ?)",
+            (concept, domain, epoch)
         )
+        new_id = c.lastrowid
 
-        concept, domain, energy = find_settling_concept(
-            surrounding_nodes, surrounding_relations, forbidden_sigs
-        )
+        # Connect into hole
+        from semantics import relation_weight
+        c.execute("INSERT INTO edges VALUES (?, ?, ?, ?)",
+                  (src_id, new_id, 'requires',    relation_weight('requires')))
+        c.execute("INSERT INTO edges VALUES (?, ?, ?, ?)",
+                  (new_id, dst_id, 'emerges_from', relation_weight('emerges_from')))
 
-        src_domain = node_data.get(a, {}).get('domain', 'unassigned')
-        dst_domain = node_data.get(d, {}).get('domain', 'unassigned')
-        relation   = sample_relation(src_domain, dst_domain)
-        weight     = relation_weight(relation)
-
-        c.execute("INSERT INTO edges VALUES (?, ?, ?, ?)", (a, d, relation, weight))
-        edge_set.add((a, d))
-
-        demand = describe_hole_demand(
-            [n['domain'] for n in surrounding_nodes],
-            surrounding_relations
-        )
+        # Mark hole filled
         c.execute("""
-            INSERT INTO holes (epoch_found, shape_sig, demands, filled, filled_by)
-            VALUES (?, ?, ?, 1, ?)
-        """, (epoch, f"{a}-{bridge}-{d}", demand, f"{concept} ({domain})"))
+            UPDATE holes SET filled = 1, filled_by = ?, filled_epoch = ?
+            WHERE src_id = ? AND dst_id = ?
+        """, (new_id, epoch, src_id, dst_id))
 
-        settled.append({
-            'src': a, 'dst': d,
-            'concept': concept, 'domain': domain,
-            'energy': energy, 'demand': demand,
-            'relation': relation
-        })
-        inserted += 1
-
-    conn.commit()
-    return settled
-
-
-def settle_specific_hole(conn, epoch, src_id, dst_id):
-    """
-    Settle a specific hole by src and dst IDs.
-    Respects the hold check — returns None if hole is still held.
-    """
-    if _is_held(conn, src_id, dst_id):
-        return None   # Hold active — not yet
-
-    c = conn.cursor()
-    c.execute("SELECT src, dst FROM edges")
-    edge_set = set(c.fetchall())
-    if (src_id, dst_id) in edge_set:
-        return None
-
-    c.execute("SELECT id, concept, domain FROM nodes")
-    node_data = {row[0]: {'concept': row[1], 'domain': row[2]} for row in c.fetchall()}
-
-    c.execute("SELECT signature FROM forbidden")
-    forbidden_sigs = set(row[0] for row in c.fetchall())
-
-    surrounding_nodes, surrounding_relations = _gather_neighborhood(
-        conn, src_id, dst_id, edge_set, node_data
-    )
-
-    concept, domain, energy = find_settling_concept(
-        surrounding_nodes, surrounding_relations, forbidden_sigs
-    )
-
-    src_domain = node_data.get(src_id, {}).get('domain', 'unassigned')
-    dst_domain = node_data.get(dst_id, {}).get('domain', 'unassigned')
-    relation   = sample_relation(src_domain, dst_domain)
-    weight     = relation_weight(relation)
-
-    c.execute("INSERT INTO edges VALUES (?, ?, ?, ?)", (src_id, dst_id, relation, weight))
-
-    demand = describe_hole_demand(
-        [n['domain'] for n in surrounding_nodes],
-        surrounding_relations
-    )
-    c.execute("""
-        UPDATE holes SET filled=1, filled_by=?
-        WHERE shape_sig=? AND filled=0
-    """, (f"{concept} ({domain})", f"hole:{src_id}->{dst_id}"))
-
-    conn.commit()
-    return {
-        'src': src_id, 'dst': dst_id,
-        'concept': concept, 'domain': domain,
-        'energy': energy, 'demand': demand,
-        'relation': relation
-    }
+        conn.commit()
+        settled += 1
