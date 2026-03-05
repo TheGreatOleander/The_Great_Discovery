@@ -1,0 +1,84 @@
+.
+├── BUILD_AND_RUN.md
+├── HARDENING_SPEC.md
+├── LICENSE
+├── README.md
+├── ROADMAP.md
+├── VERSION
+├── ai_augmentation.jsx
+├── convergence.py
+├── core_engine
+│   ├── adaptive_pressure.py
+│   ├── convergence.py
+│   ├── entropy.py
+│   ├── governance_metrics.py
+│   ├── governance_mutation.py
+│   ├── hole_metrics.py
+│   ├── incentive_alignment.py
+│   ├── invariants.py
+│   ├── pressure_metric.py
+│   ├── replay.py
+│   ├── snapshot_logger.py
+│   └── stability.py
+├── core_engine.py
+├── core_engine_convergence.py
+├── core_engine_stability.py
+├── core_structural
+│   ├── __init__.py
+│   ├── constraint_model.py
+│   ├── graph_backbone.py
+│   ├── graph_model.py
+│   ├── incentive_model.py
+│   └── system_model.py
+├── dashboard.html
+├── demos
+│   ├── __init__.py
+│   └── governance_demo.py
+├── discovery_bridge
+│   ├── README.md
+│   ├── config.js
+│   ├── docs
+│   │   └── n8n_setup.md
+│   ├── jsx-patch
+│   │   ├── ai_augmentation.jsx
+│   │   └── bridge.js
+│   └── n8n
+│       └── structural_bridge_flow.json
+├── docs
+│   ├── ARCHITECTURE.md
+│   ├── FOUNDATION.md
+│   ├── GLOSSARY.md
+│   ├── MANIFESTO.md
+│   ├── MATH_REFERENCE.docx
+│   └── ROADMAP.md
+├── driver.py
+├── examples
+│   └── basic_simulation.py
+├── explorer.py
+├── governance.py
+├── hole_detector.py
+├── hole_monitor.py
+├── images
+│   └── The_Great_Discovery.jpg
+├── kernel
+│   ├── __init__.py
+│   ├── constitution.py
+│   ├── engine.py
+│   ├── loop.py
+│   ├── replay.py
+│   └── state.py
+├── pressure_engine.py
+├── questioner.py
+├── recursion.py
+├── requirements.txt
+├── run_discovery.py
+├── semantics.py
+├── settler.py
+├── stress_test.py
+├── tree.txt
+└── viz
+    ├── convergence_plot.py
+    ├── export_graph.py
+    └── pressure_heatmap.py
+
+13 directories, 69 files
