@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>The Great Discovery Topology</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+
+<h2>Discovery Topology Graph</h2>
+
+<svg width="800" height="600"></svg>
+
+<script>
+
+const nodes=[
+{id:"A"},{id:"B"},{id:"C"},{id:"D"}
+]
+
+const links=[
+{source:"A",target:"B"},
+{source:"B",target:"C"},
+{source:"C",target:"D"},
+{source:"A",target:"D"}
+]
+
+const svg=d3.select("svg")
+
+const sim=d3.forceSimulation(nodes)
+.force("link",d3.forceLink(links).id(d=>d.id).distance(100))
+.force("charge",d3.forceManyBody())
+.force("center",d3.forceCenter(400,300))
+
+const link=svg.selectAll("line")
+.data(links)
+.enter()
+.append("line")
+
+const node=svg.selectAll("circle")
+.data(nodes)
+.enter()
+.append("circle")
+.attr("r",10)
+
+sim.on("tick",()=>{
+
+link
+.attr("x1",d=>d.source.x)
+.attr("y1",d=>d.source.y)
+.attr("x2",d=>d.target.x)
+.attr("y2",d=>d.target.y)
+
+node
+.attr("cx",d=>d.x)
+.attr("cy",d=>d.y)
+
+})
+
+</script>
+
+</body>
+</html>

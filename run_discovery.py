@@ -1,51 +1,36 @@
 
-import argparse
-import http.server
-import socketserver
-import webbrowser
-import os
-import sys
+from core.discovery_engine import DiscoveryEngine
+from topology.knowledge_topology import KnowledgeTopology
+from pressure.pressure_field import PressureField
+from investigators.analogy_investigator import AnalogyInvestigator
+from investigators.theorem_investigator import TheoremInvestigator
+from memory.discovery_archive import DiscoveryArchive
+import random
 
-PORT = 8080
+topology = KnowledgeTopology()
+pressure = PressureField()
+memory = DiscoveryArchive()
 
-def run_dashboard():
-    root = os.getcwd()
-    print(f"Starting dashboard server at http://localhost:{PORT}")
-    Handler = http.server.SimpleHTTPRequestHandler
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        try:
-            webbrowser.open(f"http://localhost:{PORT}")
-        except:
-            pass
-        httpd.serve_forever()
+for i in range(10):
+    topology.add_node(f"concept_{i}")
 
-def simulate():
-    print("Simulation mode placeholder.")
-    print("Hook your discovery engine here.")
+for i in range(9):
+    topology.add_edge(f"concept_{i}",f"concept_{i+1}")
 
-def export():
-    print("Export mode placeholder.")
-    print("Hook your export pipeline here.")
+for n in topology.nodes:
+    pressure.add_pressure(n,random.random())
 
-def main():
-    parser = argparse.ArgumentParser(description="The Great Discovery launcher")
-    parser.add_argument("--dashboard", action="store_true")
-    parser.add_argument("--simulate", action="store_true")
-    parser.add_argument("--export", action="store_true")
+engine = DiscoveryEngine(
+    topology,
+    pressure,
+    [AnalogyInvestigator(),TheoremInvestigator()],
+    memory
+)
 
-    args = parser.parse_args()
+for i in range(20):
 
-    if args.simulate:
-        simulate()
+    discoveries = engine.step()
 
-    if args.export:
-        export()
+    print("iteration",i,"discoveries",discoveries)
 
-    if args.dashboard:
-        run_dashboard()
-
-    if not any(vars(args).values()):
-        parser.print_help()
-
-if __name__ == "__main__":
-    main()
+print("total discoveries",memory.summary())

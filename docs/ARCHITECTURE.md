@@ -1,15 +1,18 @@
 
-# Great Discovery Engine – Full Kernel Architecture
+# The Great Discovery Engine v2
 
-This package represents the stabilized constitutional kernel.
+## Core Idea
 
-Core properties:
+Knowledge emerges from resolving contradictions within a constrained topology.
 
-- Deterministic execution
-- Transactional mutation rollback
-- Governance delta bounding
-- Constitutional enforcement
-- Replay logging
-- Modular injection of metrics and mutation logic
+## System Layers
 
-This kernel is agent-agnostic and ready for multi-agent or LLM injection layers.
+1. Knowledge Topology
+2. Pressure Field System
+3. Investigator Layer
+4. Discovery Memory
+5. Visualization
+
+## Discovery Loop
+
+detect instability → compute pressure → investigate → archive discovery → integrate into topology
