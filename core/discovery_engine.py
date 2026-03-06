@@ -1,3 +1,5 @@
+import random
+
 
 class DiscoveryEngine:
 
@@ -9,25 +11,36 @@ class DiscoveryEngine:
         self.iteration = 0
 
     def step(self):
+
         self.iteration += 1
-
-        unstable = self.topology.detect_instability()
-
         discoveries = []
 
+        # inject curiosity pressure
+        for node in self.topology.nodes:
+            if random.random() < 0.15:
+                self.pressure_field.add_pressure(node, random.random() * 0.5)
+
+        unstable = self.topology.detect_instability(self.pressure_field)
+
         for region in unstable:
+
             pressure = self.pressure_field.measure(region)
 
-            investigator = sorted(self.investigators, key=lambda i: i.priority)[0]
+            for investigator in sorted(self.investigators, key=lambda i: i.priority):
 
-            result = investigator.investigate(region, pressure)
+                result = investigator.investigate(region, pressure)
 
-            if result:
-                discoveries.append(result)
-                self.memory.archive(result)
-                self.topology.integrate(result)
+                if not result:
+                    continue
 
-        # diffuse pressure across graph
+                accepted = self.memory.archive(result)
+
+                if accepted:
+                    discoveries.append(result)
+                    self.topology.integrate(result)
+
+                break
+
         self.pressure_field.diffuse(self.topology)
 
         return discoveries

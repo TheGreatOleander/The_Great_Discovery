@@ -1,4 +1,3 @@
-
 class KnowledgeTopology:
 
     def __init__(self):
@@ -6,17 +5,23 @@ class KnowledgeTopology:
         self.edges = {}
 
     def add_node(self, node):
-        self.nodes[node] = {"pressure":0}
+        if node not in self.nodes:
+            self.nodes[node] = {"pressure": 0}
 
     def add_edge(self, a, b):
         self.edges.setdefault(a, []).append(b)
         self.edges.setdefault(b, []).append(a)
 
-    def detect_instability(self):
+    # FIX: read pressure from PressureField instead of stale node values
+    def detect_instability(self, pressure_field):
         unstable = []
-        for n,data in self.nodes.items():
-            if data["pressure"] > 0.8:
+
+        for n in self.nodes:
+            pressure = pressure_field.measure(n)
+
+            if pressure > 0.8:
                 unstable.append(n)
+
         return unstable
 
     def integrate(self, discovery):

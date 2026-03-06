@@ -1,15 +1,22 @@
+import random
 
 class AnalogyInvestigator:
 
-    priority = 1
+    def __init__(self):
+        self.priority = 1
+        self.counter = 0
 
     def investigate(self, region, pressure):
 
-        if pressure < 0.5:
+        if pressure < 0.8:
             return None
 
+        self.counter += 1
+
+        discovery_id = f"analogy_{region}_variant_{self.counter}"
+
         return {
-            "id": f"analogy_{region}",
+            "id": discovery_id,
             "source": region,
             "type": "analogy",
             "pressure": pressure

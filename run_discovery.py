@@ -1,36 +1,78 @@
 
-from core.discovery_engine import DiscoveryEngine
-from topology.knowledge_topology import KnowledgeTopology
-from pressure.pressure_field import PressureField
-from investigators.analogy_investigator import AnalogyInvestigator
-from investigators.theorem_investigator import TheoremInvestigator
-from memory.discovery_archive import DiscoveryArchive
 import random
+from topology_seed import seed_topology
+from hole_detector import find_nameable_holes
+from topology_pressure import detect_pressure_pairs
+from analogy_engine import detect_analogies
+from entropy_injection import inject_entropy
+from graph_store import save_graph, load_graph
 
-topology = KnowledgeTopology()
-pressure = PressureField()
-memory = DiscoveryArchive()
+MAX_INSERT = 5
 
-for i in range(10):
-    topology.add_node(f"concept_{i}")
+def apply_discoveries(edges, proposals):
 
-for i in range(9):
-    topology.add_edge(f"concept_{i}",f"concept_{i+1}")
+    added = 0
 
-for n in topology.nodes:
-    pressure.add_pressure(n,random.random())
+    for src, dst, reason in proposals:
 
-engine = DiscoveryEngine(
-    topology,
-    pressure,
-    [AnalogyInvestigator(),TheoremInvestigator()],
-    memory
-)
+        if added >= MAX_INSERT:
+            break
 
-for i in range(20):
+        edge = (src, dst)
 
-    discoveries = engine.step()
+        if edge not in edges:
 
-    print("iteration",i,"discoveries",discoveries)
+            edges.append(edge)
+            added += 1
 
-print("total discoveries",memory.summary())
+            print(f"   discovered: {src} -> {dst}  ({reason})")
+
+    return added
+
+
+def run():
+
+    print("Starting Discovery Engine v+2")
+
+    edges = load_graph()
+
+    if not edges:
+        edges = seed_topology()
+
+    for iteration in range(25):
+
+        print("----------------")
+        print("iteration", iteration)
+
+        holes = find_nameable_holes(edges)
+        pressure = detect_pressure_pairs(edges)
+        analogies = detect_analogies(edges)
+
+        print("holes:", len(holes))
+        print("pressure:", len(pressure))
+        print("analogies:", len(analogies))
+
+        proposals = []
+
+        for h in holes[:10]:
+            proposals.append((h["src"], h["dst"], "hole"))
+
+        for a,b in pressure[:10]:
+            proposals.append((a,b,"pressure"))
+
+        for a,b in analogies[:10]:
+            proposals.append((a,b,"analogy"))
+
+        added = apply_discoveries(edges, proposals)
+
+        if added == 0:
+            print("   injecting entropy...")
+            inject_entropy(edges)
+
+        save_graph(edges)
+
+        print("edges total:", len(edges))
+
+
+if __name__ == "__main__":
+    run()
