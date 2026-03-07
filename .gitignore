@@ -23,3 +23,8 @@ generated/
 cache/
 tmp/
 temp/
+
+# Local exchange / snapshot artifacts
+tree.txt
+output.txt
+The_Great_Discovery.zip

@@ -1,0 +1,14 @@
+[
+  {
+    "concept": "point",
+    "domain": "geometry"
+  },
+  {
+    "concept": "line",
+    "domain": "geometry"
+  },
+  {
+    "concept": "manifold",
+    "domain": "geometry"
+  }
+]
