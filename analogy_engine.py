@@ -1,31 +1,41 @@
-
-from collections import defaultdict
-
-def build_signature(edges):
-
-    sig = defaultdict(set)
-
-    for a,b in edges:
-        sig[a].add(b)
-
-    return sig
-
 def detect_analogies(edges):
 
-    sig = build_signature(edges)
-
-    nodes = list(sig.keys())
     results = []
 
+    outgoing = {}
+
+    for src, dst in edges:
+
+        if src not in outgoing:
+            outgoing[src] = set()
+
+        outgoing[src].add(dst)
+
+    nodes = list(outgoing.keys())
+
     for i in range(len(nodes)):
-        for j in range(i+1,len(nodes)):
+        for j in range(i + 1, len(nodes)):
 
             a = nodes[i]
             b = nodes[j]
 
-            shared = sig[a].intersection(sig[b])
+            a_targets = outgoing[a]
+            b_targets = outgoing[b]
 
-            if len(shared) >= 2:
-                results.append((a,b))
+            shared = a_targets.intersection(b_targets)
+
+            if len(shared) >= 1:
+
+                a_unique = a_targets - shared
+                b_unique = b_targets - shared
+
+                for x in a_unique:
+                    for y in b_unique:
+
+                        results.append((a, y))
+                        results.append((b, x))
+
+    # remove duplicates
+    results = list(set(results))
 
     return results
