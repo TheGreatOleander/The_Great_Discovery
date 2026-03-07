@@ -1,31 +1,19 @@
 
-Discovery Engine ver+2
+# THE GREAT DISCOVERY
 
-New Features
-------------
+This project implements an **Autonomous Knowledge Evolution Engine**.
 
-• Persistent knowledge graph
-• Entropy injection to prevent convergence
-• Three discovery mechanisms:
-    - logical holes
-    - topology pressure
-    - analogy patterns
+The goal is to create a system capable of:
 
-Modules
--------
+• Detecting gaps in knowledge  
+• Generating investigative questions  
+• Running multiple reasoning agents  
+• Producing candidate discoveries  
+• Validating those discoveries against constraints  
+• Expanding a structured knowledge graph  
 
-run_discovery.py      main engine loop
-hole_detector.py      transitive discovery
-topology_pressure.py  shared-neighbor bridges
-analogy_engine.py     structural motif similarity
-entropy_injection.py  exploration generator
-graph_store.py        persistent knowledge graph
+The system operates as a **continuous discovery loop**.
 
-Run
----
+For the full architectural definition see:
 
-python run_discovery.py
-
-The graph will persist between runs in:
-
-knowledge_graph.json
+docs/CANONICAL_SYSTEM_DEFINITION.md
