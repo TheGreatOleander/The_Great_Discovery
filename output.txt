@@ -1,0 +1,502 @@
+----------------
+iteration 0
+nodes: 97
+edges: 94
+holes detected: 149
+----------------
+iteration 1
+nodes: 98
+edges: 95
+holes detected: 152
+----------------
+iteration 2
+nodes: 99
+edges: 96
+holes detected: 156
+----------------
+iteration 3
+nodes: 100
+edges: 97
+holes detected: 161
+----------------
+iteration 4
+nodes: 101
+edges: 98
+holes detected: 162
+----------------
+iteration 5
+nodes: 102
+edges: 99
+holes detected: 165
+----------------
+iteration 6
+nodes: 103
+edges: 100
+holes detected: 168
+----------------
+iteration 7
+nodes: 104
+edges: 101
+holes detected: 168
+----------------
+iteration 8
+nodes: 105
+edges: 102
+holes detected: 171
+----------------
+iteration 9
+nodes: 106
+edges: 103
+holes detected: 176
+----------------
+iteration 10
+nodes: 107
+edges: 104
+holes detected: 177
+----------------
+iteration 11
+nodes: 108
+edges: 105
+holes detected: 182
+----------------
+iteration 12
+nodes: 109
+edges: 106
+holes detected: 184
+----------------
+iteration 13
+nodes: 110
+edges: 107
+holes detected: 185
+----------------
+iteration 14
+nodes: 111
+edges: 108
+holes detected: 192
+----------------
+iteration 15
+nodes: 112
+edges: 109
+holes detected: 192
+----------------
+iteration 16
+nodes: 113
+edges: 110
+holes detected: 192
+----------------
+iteration 17
+nodes: 114
+edges: 111
+holes detected: 192
+----------------
+iteration 18
+nodes: 115
+edges: 112
+holes detected: 196
+----------------
+iteration 19
+nodes: 116
+edges: 113
+holes detected: 199
+----------------
+iteration 20
+nodes: 117
+edges: 114
+holes detected: 201
+----------------
+iteration 21
+nodes: 118
+edges: 115
+holes detected: 202
+----------------
+iteration 22
+nodes: 119
+edges: 116
+holes detected: 202
+----------------
+iteration 23
+nodes: 120
+edges: 117
+holes detected: 208
+----------------
+iteration 24
+nodes: 121
+edges: 118
+holes detected: 212
+----------------
+iteration 25
+nodes: 122
+edges: 119
+holes detected: 212
+----------------
+iteration 26
+nodes: 123
+edges: 120
+holes detected: 213
+----------------
+iteration 27
+nodes: 124
+edges: 121
+holes detected: 213
+----------------
+iteration 28
+nodes: 125
+edges: 122
+holes detected: 214
+----------------
+iteration 29
+nodes: 126
+edges: 122
+holes detected: 214
+----------------
+iteration 30
+nodes: 127
+edges: 123
+holes detected: 216
+----------------
+iteration 31
+nodes: 128
+edges: 124
+holes detected: 217
+----------------
+iteration 32
+nodes: 129
+edges: 125
+holes detected: 218
+----------------
+iteration 33
+nodes: 130
+edges: 126
+holes detected: 219
+----------------
+iteration 34
+nodes: 131
+edges: 127
+holes detected: 221
+----------------
+iteration 35
+nodes: 132
+edges: 128
+holes detected: 223
+----------------
+iteration 36
+nodes: 133
+edges: 129
+holes detected: 230
+----------------
+iteration 37
+nodes: 134
+edges: 130
+holes detected: 230
+----------------
+iteration 38
+nodes: 135
+edges: 131
+holes detected: 233
+----------------
+iteration 39
+nodes: 136
+edges: 132
+holes detected: 237
+----------------
+iteration 40
+nodes: 137
+edges: 133
+holes detected: 240
+----------------
+iteration 41
+nodes: 138
+edges: 134
+holes detected: 241
+----------------
+iteration 42
+nodes: 139
+edges: 135
+holes detected: 241
+----------------
+iteration 43
+nodes: 140
+edges: 136
+holes detected: 242
+----------------
+iteration 44
+nodes: 141
+edges: 137
+holes detected: 245
+----------------
+iteration 45
+nodes: 142
+edges: 138
+holes detected: 250
+----------------
+iteration 46
+nodes: 143
+edges: 139
+holes detected: 252
+----------------
+iteration 47
+nodes: 144
+edges: 140
+holes detected: 253
+----------------
+iteration 48
+nodes: 145
+edges: 141
+holes detected: 253
+----------------
+iteration 49
+nodes: 146
+edges: 142
+holes detected: 253
+----------------
+iteration 50
+nodes: 147
+edges: 143
+holes detected: 253
+----------------
+iteration 51
+nodes: 148
+edges: 144
+holes detected: 253
+----------------
+iteration 52
+nodes: 149
+edges: 145
+holes detected: 258
+----------------
+iteration 53
+nodes: 150
+edges: 146
+holes detected: 261
+----------------
+iteration 54
+nodes: 151
+edges: 147
+holes detected: 263
+----------------
+iteration 55
+nodes: 152
+edges: 148
+holes detected: 264
+----------------
+iteration 56
+nodes: 153
+edges: 149
+holes detected: 265
+----------------
+iteration 57
+nodes: 154
+edges: 150
+holes detected: 269
+----------------
+iteration 58
+nodes: 155
+edges: 151
+holes detected: 271
+----------------
+iteration 59
+nodes: 156
+edges: 152
+holes detected: 272
+----------------
+iteration 60
+nodes: 157
+edges: 153
+holes detected: 273
+----------------
+iteration 61
+nodes: 158
+edges: 154
+holes detected: 280
+----------------
+iteration 62
+nodes: 159
+edges: 155
+holes detected: 280
+----------------
+iteration 63
+nodes: 160
+edges: 156
+holes detected: 283
+----------------
+iteration 64
+nodes: 161
+edges: 157
+holes detected: 286
+----------------
+iteration 65
+nodes: 162
+edges: 158
+holes detected: 288
+----------------
+iteration 66
+nodes: 163
+edges: 159
+holes detected: 292
+----------------
+iteration 67
+nodes: 164
+edges: 160
+holes detected: 293
+----------------
+iteration 68
+nodes: 165
+edges: 161
+holes detected: 295
+----------------
+iteration 69
+nodes: 166
+edges: 162
+holes detected: 295
+----------------
+iteration 70
+nodes: 167
+edges: 163
+holes detected: 305
+----------------
+iteration 71
+nodes: 168
+edges: 164
+holes detected: 308
+----------------
+iteration 72
+nodes: 169
+edges: 165
+holes detected: 313
+----------------
+iteration 73
+nodes: 170
+edges: 166
+holes detected: 314
+----------------
+iteration 74
+nodes: 171
+edges: 167
+holes detected: 318
+----------------
+iteration 75
+nodes: 172
+edges: 168
+holes detected: 319
+----------------
+iteration 76
+nodes: 173
+edges: 169
+holes detected: 319
+----------------
+iteration 77
+nodes: 174
+edges: 170
+holes detected: 319
+----------------
+iteration 78
+nodes: 175
+edges: 171
+holes detected: 321
+----------------
+iteration 79
+nodes: 176
+edges: 172
+holes detected: 322
+----------------
+iteration 80
+nodes: 177
+edges: 173
+holes detected: 322
+----------------
+iteration 81
+nodes: 178
+edges: 174
+holes detected: 322
+----------------
+iteration 82
+nodes: 179
+edges: 175
+holes detected: 325
+----------------
+iteration 83
+nodes: 180
+edges: 176
+holes detected: 328
+----------------
+iteration 84
+nodes: 181
+edges: 177
+holes detected: 329
+----------------
+iteration 85
+nodes: 182
+edges: 178
+holes detected: 330
+----------------
+iteration 86
+nodes: 183
+edges: 179
+holes detected: 332
+----------------
+iteration 87
+nodes: 184
+edges: 180
+holes detected: 332
+----------------
+iteration 88
+nodes: 185
+edges: 181
+holes detected: 332
+----------------
+iteration 89
+nodes: 186
+edges: 182
+holes detected: 333
+----------------
+iteration 90
+nodes: 187
+edges: 183
+holes detected: 334
+----------------
+iteration 91
+nodes: 188
+edges: 184
+holes detected: 334
+----------------
+iteration 92
+nodes: 189
+edges: 185
+holes detected: 342
+----------------
+iteration 93
+nodes: 190
+edges: 186
+holes detected: 342
+----------------
+iteration 94
+nodes: 191
+edges: 187
+holes detected: 345
+----------------
+iteration 95
+nodes: 192
+edges: 188
+holes detected: 346
+----------------
+iteration 96
+nodes: 193
+edges: 189
+holes detected: 356
+----------------
+iteration 97
+nodes: 194
+edges: 190
+holes detected: 359
+----------------
+iteration 98
+nodes: 195
+edges: 191
+holes detected: 360
+----------------
+iteration 99
+nodes: 196
+edges: 192
+holes detected: 363
+
+Discovery run complete.

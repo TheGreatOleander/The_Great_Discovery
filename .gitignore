@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Databases
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
+
+# Env
+.env
+.venv/
+venv/
+
+# Runtime output
+exports/
+results/
+generated/
+cache/
+tmp/
+temp/
